@@ -610,6 +610,75 @@ proxies:
         });
     });
 
+    it('keeps Hysteria2 Clash nodes that only have hop ports and no single port', () => {
+        const clashConfig = `
+proxies:
+  - name: HK2-HY2
+    type: hysteria2
+    server: hk2.dexlos.com
+    ports: 20200-20399
+    password: hy2-secret
+    udp: true
+    skip-cert-verify: false
+    sni: hk2.dexlos.com
+  - name: US2-HY2
+    type: hysteria2
+    server: us2.dexlos.com
+    ports: 20200-20399
+    password: hy2-secret
+    udp: true
+    skip-cert-verify: false
+    sni: us2.dexlos.com
+    obfs: salamander
+    obfs-password: obfs-secret
+`;
+
+        const nodes = extractValidNodes(clashConfig);
+        expect(nodes).toHaveLength(2);
+        expect(nodes[0]).toContain('hysteria2://');
+        expect(nodes[0]).toContain('hk2.dexlos.com:20200');
+        expect(nodes[0]).toContain('ports=20200-20399');
+        expect(nodes[0]).toContain('sni=hk2.dexlos.com');
+        expect(nodes[1]).toContain('us2.dexlos.com:20200');
+        expect(nodes[1]).toContain('obfs=salamander');
+        expect(nodes[1]).toContain('obfs-password=obfs-secret');
+
+        const fullConfig = yaml.load(generateBuiltinClashConfig(nodes.join('\n'), { addFlagEmoji: false }));
+        expect(fullConfig.proxies).toHaveLength(2);
+        expect(fullConfig.proxies[0]).toMatchObject({
+            name: 'HK2-HY2',
+            type: 'hysteria2',
+            server: 'hk2.dexlos.com',
+            port: 20200,
+            ports: '20200-20399',
+            sni: 'hk2.dexlos.com'
+        });
+    });
+
+    it('uses the first hop port when converting a Hysteria2 proxy that has ports but no port', () => {
+        const url = convertClashProxyToUrl({
+            name: 'JP1-HY2',
+            type: 'hysteria2',
+            server: 'jp1.dexlos.com',
+            ports: '20000-20199',
+            password: 'hy2-secret',
+            sni: 'jp1.dexlos.com'
+        });
+
+        expect(url).toBeTruthy();
+        expect(url).toContain('jp1.dexlos.com:20000');
+        expect(url).toContain('ports=20000-20199');
+    });
+
+    it('still drops Hysteria2 when both port and ports are missing', () => {
+        expect(convertClashProxyToUrl({
+            name: 'Broken HY2',
+            type: 'hysteria2',
+            server: 'hy2.example.com',
+            password: 'hy2-secret'
+        })).toBeNull();
+    });
+
     it('documents one-way exports whose emitted schemes are not parsed back yet', () => {
         const fixtures = [
             {

@@ -16,12 +16,25 @@ function appendHysteria2RealmParams(params, realmOpts) {
     }
 }
 
+function isHysteria2Type(type) {
+    return type === 'hysteria2' || type === 'hy2' || type === 'hy';
+}
+
+function resolveHopPort(ports) {
+    if (ports == null || ports === '') return null;
+    const match = String(ports).trim().match(/^(\d{1,5})/);
+    if (!match) return null;
+    const port = Number(match[1]);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+    return port;
+}
+
 export function convertClashProxyToUrl(proxy) {
     try {
         const type = (proxy.type || '').toLowerCase();
         const name = proxy.name || 'Untitled';
         const server = proxy.server;
-        const port = proxy.port;
+        const port = proxy.port || (isHysteria2Type(type) ? resolveHopPort(proxy.ports) : null);
 
         if (!server || !port) return null;
 
