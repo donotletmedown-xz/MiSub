@@ -1,4 +1,5 @@
 import { createUnifiedTemplateModel } from '../template-model.js';
+import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 
 function parseIniSections(templateText) {
     const lines = String(templateText || '').split(/\r?\n/);
@@ -85,7 +86,7 @@ function parseAclRuleSetLine(line) {
 
     return {
         type: 'rule-set',
-        value: source,
+        value: pinRemoteRuleUrl(source),
         policy,
         source: 'remote',
         extras: []
@@ -182,7 +183,8 @@ export function parseIniTemplate(templateText, options = {}) {
             interval: options.interval || 86400,
             skipCertVerify: Boolean(options.skipCertVerify),
             enableUdp: Boolean(options.enableUdp),
-            customDnsOverride: options.customDnsOverride || ''
+            customDnsOverride: options.customDnsOverride || '',
+            dnsMode: options.dnsMode || 'clean'
         }
     });
 }

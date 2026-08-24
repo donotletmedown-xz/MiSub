@@ -194,7 +194,7 @@ function countSubscriptionNodes(nodeList, prependedContent = '') {
     const lines = String(nodeList || '')
         .split(/\r?\n/)
         .map(line => line.trim())
-        .filter(Boolean);
+        .filter(line => line && !line.startsWith('#'));
     const prependedLines = String(prependedContent || '')
         .split(/\r?\n/)
         .map(line => line.trim())
@@ -410,10 +410,13 @@ export function resolveEffectiveEngine({
 }
 
 export function resolveBuiltinRequestOptions({ searchParams, userAgent = '' } = {}) {
+    const params = searchParams || new URLSearchParams('');
+    const dnsMode = params.get('dns-mode') || params.get('dnsMode') || '';
     return {
         userAgent,
-        searchParams: searchParams || new URLSearchParams(''),
-        hiddifyCompatible: isHiddifyAgent(userAgent)
+        searchParams: params,
+        hiddifyCompatible: isHiddifyAgent(userAgent),
+        dnsMode: dnsMode.toLowerCase() === 'polluted' ? 'polluted' : 'clean'
     };
 }
 
@@ -493,7 +496,7 @@ export async function handleMisubRequest(context) {
     let subName = config.FileName;
     let isProfileExpired = false; // Moved declaration here
 
-    const DEFAULT_EXPIRED_NODE = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent('您的订阅已失效')}`;
+    const DEFAULT_EXPIRED_NODE = '# MiSub: 您的订阅已失效';
 
     let currentProfile = null;
 
@@ -622,13 +625,13 @@ export async function handleMisubRequest(context) {
             }, 0);
             if (totalRemainingBytes > 0) {
                 const fakeNodeName = `流量剩余 ≫ ${formatBytes(totalRemainingBytes)}`;
-                virtualNodes.push(`trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent(fakeNodeName)}`);
+                virtualNodes.push(`# MiSub: ${fakeNodeName}`);
             }
 
             const expireText = formatSubscriptionExpireTime(expireTimestamp);
             if (expireText) {
                 const fakeNodeName = `到期时间 ≫ ${expireText}`;
-                virtualNodes.push(`trojan://00000000-0000-0000-0000-000000000001@127.0.0.1:443#${encodeURIComponent(fakeNodeName)}`);
+                virtualNodes.push(`# MiSub: ${fakeNodeName}`);
             }
 
             prependedContentForSubconverter = virtualNodes.join('\n');
@@ -883,7 +886,8 @@ export async function handleMisubRequest(context) {
                     ruleLevel,
                     regionOverrides: Array.isArray(config.regionOverrides) ? config.regionOverrides : [],
                     isMeta: isMetaCore(userAgentHeader, url.searchParams),
-                    customDnsOverride: config.customDnsOverride || ''
+                    customDnsOverride: config.customDnsOverride || '',
+                    dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean'
                 };
                 const rendered = await ProcessorService.renderOutput({
                     targetFormat,
@@ -1022,7 +1026,8 @@ export async function handleMisubRequest(context) {
         ruleLevel: ruleLevel, // 统一后的规则等级
         regionOverrides: Array.isArray(config.regionOverrides) ? config.regionOverrides : [],
         isMeta: isMetaCore(userAgentHeader, url.searchParams),
-        customDnsOverride: config.customDnsOverride || ''
+        customDnsOverride: config.customDnsOverride || '',
+        dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean'
     };
 
     const managedConfigUrl = buildManagedConfigUrl(request.url);

@@ -32,6 +32,8 @@ describe('subscription protective node cache', () => {
     it('识别真实代理节点，排除系统伪节点', () => {
         expect(isRealProxyNode('trojan://pass@example.com:443#HK')).toBe(true);
         expect(isRealProxyNode('vmess://eyJhZGQiOiJleGFtcGxlLmNvbSJ9')).toBe(true);
+        expect(isRealProxyNode('trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#伪节点')).toBe(false);
+        expect(isRealProxyNode('vless://00000000-0000-0000-0000-000000000000@[::1]:443#伪节点')).toBe(false);
         expect(isRealProxyNode('127.0.0.1:8080#剩余流量')).toBe(false);
         expect(isRealProxyNode('到期时间：2099-01-01')).toBe(false);
         expect(isRealProxyNode('')).toBe(false);

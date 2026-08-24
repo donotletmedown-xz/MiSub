@@ -3,6 +3,7 @@
  */
 
 import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
+import { isLocalProxyEndpoint } from './node-utils.js';
 
 /**
  * 解析 URL 查询参数
@@ -986,15 +987,15 @@ const { server, port } = parseHostPort(serverPart);
 const params = parseQueryParams(url);
 const name = extractName(url);
 
-const proxy = {
-name: name || `WireGuard-${server}`,
-type: 'wireguard',
-server,
-port,
-'private-key': privateKey,
-// 'remote-dns-resolve': true, // just let the kernel decide whether to use it or not
-udp: true
-};
+    const proxy = {
+        name: name || `WireGuard-${server}`,
+        type: 'wireguard',
+        server,
+        port,
+        'private-key': privateKey,
+        'remote-dns-resolve': true,
+        udp: true
+    };
 
 // 公钥
 const publicKey = params.get('publickey') || params.get('public-key');
@@ -1002,12 +1003,8 @@ if (publicKey) {
 proxy['public-key'] = publicKey;
 }
 
-// 本地地址
-// const address = params.get('address');
-// if (address) {
-// proxy.ip = address.split(',').map(a => a.trim());
-// }
-// IPv6 Support
+// 本地地址。保留 WireGuard 的 CIDR 和多地址形状，避免转换往返时丢失
+// 隧道前缀；同时提供 ipv6 兼容字段给需要独立 IPv6 字段的渲染器。
 const address = params.get('address');
 if (address) {
     const addresses = address
@@ -1015,16 +1012,10 @@ if (address) {
         .map(a => a.trim())
         .filter(Boolean);
 
-    const ipv4 = addresses.find(a => !a.includes(':'));
     const ipv6 = addresses.find(a => a.includes(':'));
 
-    if (ipv4) {
-        proxy.ip = ipv4.replace(/\/\d+$/, '');
-    }
-
-    if (ipv6) {
-        proxy.ipv6 = ipv6.replace(/\/\d+$/, '');
-    }
+    if (addresses.length > 0) proxy.ip = addresses;
+    if (ipv6) proxy.ipv6 = ipv6;
 }
 
 // Allowed IPs
@@ -1503,7 +1494,7 @@ export function urlsToClashProxies(urls, options = {}) {
             
             return proxy;
         })
-        .filter(proxy => proxy !== null);
+        .filter(proxy => proxy !== null && !isLocalProxyEndpoint(proxy));
 }
 
 /**

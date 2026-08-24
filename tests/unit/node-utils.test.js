@@ -50,6 +50,15 @@ describe('node-utils', () => {
         expect(proxies[0].name).toContain('台湾 1');
     });
 
+    it('urlsToClashProxies 应过滤本机回环出口', () => {
+        const proxies = urlsToClashProxies([
+            'trojan://fake@127.0.0.1:443#伪节点',
+            'trojan://real@example.com:443#真实节点'
+        ]);
+
+        expect(proxies.map(proxy => proxy.server)).toEqual(['example.com']);
+    });
+
     it('TUIC 节点密码包含 URL 保留字符时应保持可回环解析', () => {
         const proxy = {
             name: 'TUIC Special',

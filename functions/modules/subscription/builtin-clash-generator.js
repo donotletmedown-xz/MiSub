@@ -7,6 +7,7 @@
 import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
+import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
 import {
     POLICY_GROUPS,
     RULE_SETS,
@@ -195,65 +196,20 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
             proxyGroups = relayConfig.proxyGroups;
         }
 
-        // 基础配置
-        const defaultDns = {
-            'enable': true,
-            'ipv6': true,
-            'enhanced-mode': 'fake-ip',
-            'fake-ip-range': '198.18.0.1/16',
-            'fake-ip-filter': [
-                'geosite:private',
-                'geosite:category-ntp'
-            ],
-            'use-hosts': false,
-            'use-system-hosts': false,
-            'nameserver': [
-                'https://1.1.1.1/dns-query',
-                'https://8.8.8.8/dns-query'
-            ],
-            'proxy-server-nameserver': [
-                'https://223.5.5.5/dns-query',
-                'https://223.6.6.6/dns-query'
-            ],
-            'nameserver-policy': {
-                'geosite:cn': [
-                    'https://223.5.5.5/dns-query',
-                    'https://223.6.6.6/dns-query'
-                ]
-            },
-            'respect-rules': true
-        };
-
-        let dnsConfig = defaultDns;
-        const customDnsRaw = options.customDnsOverride || '';
-        if (customDnsRaw.trim()) {
-            try {
-                let parsed;
-                const trimmed = customDnsRaw.trim();
-                if (/^\{/.test(trimmed)) {
-                    parsed = JSON.parse(trimmed);
-                } else {
-                    parsed = yaml.load(trimmed);
-                }
-                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                    // 如果解析结果包含 dns 顶层键，取 dns 的值
-                    if (parsed.dns && typeof parsed.dns === 'object' && !Array.isArray(parsed.dns)) {
-                        dnsConfig = parsed.dns;
-                    } else {
-                        dnsConfig = parsed;
-                    }
-                }
-            } catch {
-                // 格式错误，保持使用默认 DNS
-            }
-        }
+        // 基础配置：安全默认值，不再依赖 KV 覆盖才能避免 DNS 递归。
+        const dnsConfig = resolveSafeDnsConfig(options.customDnsOverride || '', {
+            mode: options.dnsMode,
+            proxyGroup: DNS_PROXY_GROUP
+        });
 
         const config = {
             'mixed-port': 7890,
-            'allow-lan': true,
+            'allow-lan': false,
+            'bind-address': '127.0.0.1',
+            'ipv6': false,
             'mode': 'rule',
             'log-level': 'info',
-            'external-controller': ':9090',
+            'external-controller': '127.0.0.1:9090',
 
             'dns': dnsConfig,
 
