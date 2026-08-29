@@ -141,6 +141,31 @@ expect(decoded.id).toBe('uuid-1234-5678')
                 expect(result).toContain('vless-uuid-1234@vless.example.com:443')
             })
 
+            it('应正确转换 VLESS + XHTTP 配置 (保留 path/host/mode)', () => {
+                const proxy = {
+                    name: 'Test VLESS XHTTP',
+                    type: 'vless',
+                    server: 'xhttp.example.com',
+                    port: 443,
+                    uuid: 'xhttp-uuid-5678',
+                    network: 'xhttp',
+                    tls: true,
+                    'xhttp-opts': {
+                        path: '/argo',
+                        host: 'example.org',
+                        mode: 'packet-up'
+                    }
+                }
+
+                const result = convertClashProxyToUrl(proxy)
+                expect(result).toBeTruthy()
+                expect(result).toMatch(/^vless:\/\//)
+                expect(result).toContain('type=xhttp')
+                expect(result).toContain('path=%2Fargo')
+                expect(result).toContain('host=example.org')
+                expect(result).toContain('mode=packet-up')
+            })
+
 it('应正确处理Reality配置', () => {
 const proxy = {
 name: 'VLESS Reality',

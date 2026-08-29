@@ -174,7 +174,22 @@ export const DEFAULT_DNS_CONFIG = {
     }
 };
 
+export function isExplicitDnsBlock(override) {
+    if (!isObject(override)) return false;
+    return (
+        override.enable !== undefined ||
+        override['enhanced-mode'] !== undefined ||
+        override['proxy-server-nameserver'] !== undefined ||
+        (Array.isArray(override.nameserver) && isObject(override['nameserver-policy']))
+    );
+}
+
 export function resolveSafeDnsConfig(raw, options = {}) {
+    const rawOverride = parseOverride(raw);
+    if (isExplicitDnsBlock(rawOverride)) {
+        return clone(rawOverride);
+    }
+
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
     const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
@@ -193,7 +208,7 @@ export function resolveSafeDnsConfig(raw, options = {}) {
         ? foreign.map(value => withProxy(value, proxyGroup))
         : [];
 
-    const override = policyInput(parseOverride(raw));
+    const override = policyInput(rawOverride);
     SAFE_DNS_FIELDS.forEach(key => {
         if (override[key] === undefined) return;
         if (key === 'fake-ip-filter-mode' && !['blacklist', 'whitelist', 'rule'].includes(String(override[key]))) return;

@@ -129,4 +129,35 @@ describe('node-utils', () => {
             }
         });
     });
+
+    it('VLESS + XHTTP Clash 节点的 xhttp-opts 应在 URL 转换中保留 path/host/mode 并可回环解析', () => {
+        const proxy = {
+            name: 'XHTTP-1',
+            type: 'vless',
+            server: 'host.example.com',
+            port: 443,
+            uuid: 'u-u-i-d',
+            network: 'xhttp',
+            tls: true,
+            'xhttp-opts': {
+                path: '/argo',
+                host: 'example.org',
+                mode: 'packet-up'
+            }
+        };
+
+        const url = convertClashProxyToUrl(proxy);
+        const proxies = urlsToClashProxies([url]);
+
+        expect(url).toContain('type=xhttp');
+        expect(url).toContain('path=%2Fargo');
+        expect(url).toContain('host=example.org');
+        expect(url).toContain('mode=packet-up');
+        expect(proxies).toHaveLength(1);
+        expect(proxies[0]['xhttp-opts']).toMatchObject({
+            path: '/argo',
+            host: 'example.org',
+            mode: 'packet-up'
+        });
+    });
 });

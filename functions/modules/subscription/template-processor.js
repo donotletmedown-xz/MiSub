@@ -301,21 +301,29 @@ function ensureAiPolicy(model) {
  * @param {Object} model - 统一模板模型
  */
 export function applySmartModelOptimizations(model) {
-    const { ruleLevel } = model.meta;
-    
+    const { ruleLevel } = model.meta || {};
+    const normalizedLevel = (ruleLevel || '').toLowerCase();
+    const isCustomOrNone = !normalizedLevel || normalizedLevel === 'none';
+
     // 1. 执行现有的正则过滤器解析 (始终执行)
     resolveGroupFilters(model);
 
-    // DNS 出站不能继承普通主组的 DIRECT 选项，否则 TUN 下会泄露或形成递归。
-    ensureDnsProxyGroup(model);
+    // 2. DNS 出口策略组注入：
+    // 只要没用自定义 DNS（使用作者默认 Safe DNS），就保证注入 DNS 出口策略组；
+    // 只要自定义配置了 DNS，就不跟随注入 DNS 出口策略组。
+    const hasCustomDns = Boolean(model.settings?.customDnsOverride && String(model.settings.customDnsOverride).trim());
+    if (!hasCustomDns) {
+        ensureDnsProxyGroup(model);
+    }
 
-    // AI 服务分组必须代理优先且 fail-closed；同时补齐主要服务的独立域名规则。
-    ensureAiPolicy(model);
+    // 3. AI 服务分组与分流规则注入：
+    // 仅在非纯自定义模板模式（启用内置分流）下才注入
+    if (!isCustomOrNone) {
+        ensureAiPolicy(model);
+    }
 
-    // 2. 检查等级。如果是 none (完全禁用)，我们只执行占位符展开和清理，不进行智能注入。
-    const normalizedLevel = (ruleLevel || '').toLowerCase();
-    
-    if (normalizedLevel !== 'none' && normalizedLevel !== 'base' && normalizedLevel) {
+    // 4. 检查等级。如果是 none (完全禁用)，我们只执行占位符展开和清理，不进行智能注入。
+    if (!isCustomOrNone && normalizedLevel !== 'base') {
         // 3. 准备获取所有节点的名称，用于后续注入
         const proxyNames = model.proxies.map(p => p.name || p.tag).filter(Boolean);
         if (proxyNames.length > 0) {

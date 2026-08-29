@@ -153,6 +153,13 @@ export function convertClashProxyToUrl(proxy) {
                 if (httpupgradeOpts.path) params.push(`path=${encodeURIComponent(httpupgradeOpts.path)}`);
                 if (httpupgradeOpts.host) params.push(`host=${encodeURIComponent(httpupgradeOpts.host)}`);
             }
+            const xhttpOpts = proxy['xhttp-opts'] || proxy.xhttpOpts;
+            if (xhttpOpts) {
+                if (xhttpOpts.path) params.push(`path=${encodeURIComponent(xhttpOpts.path)}`);
+                const xhttpHost = xhttpOpts.host || xhttpOpts.headers?.Host;
+                if (xhttpHost) params.push(`host=${encodeURIComponent(xhttpHost)}`);
+                if (xhttpOpts.mode) params.push(`mode=${encodeURIComponent(xhttpOpts.mode)}`);
+            }
             const realityOpts = proxy['reality-opts'];
             if (realityOpts) {
                 params.push('security=reality');
