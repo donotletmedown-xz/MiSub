@@ -27,4 +27,13 @@ describe('Loon 内置生成器', () => {
         expect(result).toContain('SameName = Shadowsocks');
         expect(result).toContain('SameName_1 = Shadowsocks');
     });
+
+    it('应输出 AnyTLS 节点并保留 sni/alpn/skip-cert-verify', () => {
+        const anytls = 'anytls://pass123@1.2.3.4:443?sni=cdn.example.com&alpn=h2%2Chttp%2F1.1&allowInsecure=1#AnyTLSNode';
+        const result = generateBuiltinLoonConfig(anytls);
+        expect(result).toContain('AnyTLSNode = anytls, 1.2.3.4, 443, pass123');
+        expect(result).toContain('sni=cdn.example.com');
+        expect(result).toContain('alpn=h2');
+        expect(result).toContain('skip-cert-verify=true');
+    });
 });

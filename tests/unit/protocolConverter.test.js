@@ -229,6 +229,38 @@ expect(result).toContain('sid=abc123')
             })
         })
 
+        describe('AnyTLS', () => {
+            it('应正确转换基础AnyTLS配置', () => {
+                const proxy = {
+                    name: 'Test AnyTLS',
+                    type: 'anytls',
+                    server: 'anytls.example.com',
+                    port: 443,
+                    password: 'anytls-pass'
+                }
+
+                const result = convertClashProxyToUrl(proxy)
+                expect(result).toBeTruthy()
+                expect(result).toMatch(/^anytls:\/\/anytls-pass@anytls\.example\.com:443/)
+            })
+
+            it('应保留AnyTLS的sni和跳过证书验证参数', () => {
+                const proxy = {
+                    name: 'Test AnyTLS TLS',
+                    type: 'anytls',
+                    server: 'anytls.example.com',
+                    port: 443,
+                    password: 'anytls-pass',
+                    sni: 'apple.com',
+                    'skip-cert-verify': true
+                }
+
+                const result = convertClashProxyToUrl(proxy)
+                expect(result).toContain('sni=apple.com')
+                expect(result).toContain('allowInsecure=1')
+            })
+        })
+
         describe('边界情况', () => {
             it('空输入应返回null', () => {
                 expect(convertClashProxyToUrl(null)).toBeNull()
