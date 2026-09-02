@@ -86,7 +86,7 @@ API 路径 `/api/*` 总是优先进入 `handleApiRequest(request, env)`，不会
 2. 按 `customId` 或 `id` 查找订阅组。
 3. 订阅组必须存在且 `enabled` 为真。
 4. 如果设置了 `expiresAt` 且已过期：
-   - 只返回一个过期提示伪节点。
+   - 只返回一个可解析的过期提示占位节点（节点名称为“您的订阅已到期”）。
    - 文件名仍使用订阅组名称。
 5. 未过期时：
    - 按订阅组中 `subscriptions` 的顺序选择 HTTP 订阅源。

@@ -5,6 +5,23 @@
 import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
 import { isLocalProxyEndpoint } from './node-utils.js';
 
+const VIRTUAL_INFO_NODE_PASSWORD = '00000000-0000-0000-0000-000000000000';
+
+function isVirtualInfoProxy(proxy) {
+    if (!proxy || typeof proxy !== 'object') return false;
+
+    const type = String(proxy.type || '').toLowerCase();
+    const server = String(proxy.server || '').trim().toLowerCase();
+    const password = String(proxy.password || '').trim();
+    const name = String(proxy.name || '').trim();
+
+    return type === 'trojan'
+        && server === '127.0.0.1'
+        && Number(proxy.port) === 443
+        && password === VIRTUAL_INFO_NODE_PASSWORD
+        && /(?:流量剩余|到期时间|您的订阅已到期)/.test(name);
+}
+
 /**
  * 解析 URL 查询参数
  * @param {string} url - 节点 URL
@@ -1494,7 +1511,7 @@ export function urlsToClashProxies(urls, options = {}) {
             
             return proxy;
         })
-        .filter(proxy => proxy !== null && !isLocalProxyEndpoint(proxy));
+        .filter(proxy => proxy !== null && (isVirtualInfoProxy(proxy) || !isLocalProxyEndpoint(proxy)));
 }
 
 /**
