@@ -262,8 +262,12 @@ function parseVlessUrl(url) {
             proxy.tls = true;
             const realityOpts = {};
             if (params.get('pbk')) realityOpts['public-key'] = params.get('pbk');
-            if (params.get('sid')) realityOpts['short-id'] = params.get('sid');
+            if (params.get('sid')) realityOpts['short-id'] = String(params.get('sid'));
             if (params.get('spx')) realityOpts['spider-x'] = params.get('spx');
+            const mlkem = params.get('x25519mlkem768') || params.get('pqkex');
+            if (mlkem && mlkem !== '0' && mlkem !== 'false') {
+                realityOpts['support-x25519mlkem768'] = true;
+            }
             if (Object.keys(realityOpts).length > 0) {
                 proxy['reality-opts'] = realityOpts;
             }

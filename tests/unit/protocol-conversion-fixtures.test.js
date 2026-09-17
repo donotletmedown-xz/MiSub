@@ -146,6 +146,7 @@ describe('protocol conversion fixtures', () => {
                         'public-key': 'public-key-value',
                         'short-id': 'abcd',
                         'spider-x': '/',
+                        'support-x25519mlkem768': true,
                     },
                     'grpc-opts': {
                         'grpc-service-name': 'update',
@@ -169,6 +170,7 @@ describe('protocol conversion fixtures', () => {
                         'public-key': 'public-key-value',
                         'short-id': 'abcd',
                         'spider-x': '/',
+                        'support-x25519mlkem768': true,
                     },
                     'grpc-opts': {
                         'grpc-service-name': 'update',
@@ -758,5 +760,63 @@ proxies:
             expect(urlToClashProxy(url)).toBeNull();
             expect(urlsToClashProxies([url])).toEqual([]);
         }
+    });
+
+    it('preserves VLESS Reality short-id and ML-KEM flag from Clash Verge YAML', () => {
+        const clashConfig = `
+mode: rule
+mixed-port: 7897
+allow-lan: false
+external-controller-pipe: \\\\.\\pipe\\verge-mihomo
+proxies:
+- client-fingerprint: chrome
+  flow: xtls-rprx-vision
+  name: vless-reality-node|📊332.98GB
+  network: tcp
+  port: 443
+  reality-opts:
+    public-key: public-key-value
+    short-id: 6d1f4f
+    support-x25519mlkem768: true
+  server: vless.example.com
+  servername: www.cloudflare.com
+  tls: true
+  type: vless
+  udp: true
+  uuid: 22222222-2222-4222-8222-222222222222
+proxy-groups:
+- name: PROXY
+  type: select
+  proxies:
+  - DIRECT
+rules:
+- MATCH,PROXY
+`;
+
+        const loaded = yaml.load(clashConfig);
+        expect(String(loaded.proxies[0]['reality-opts']['short-id'])).toBe('6d1f4f');
+
+        const nodes = extractValidNodes(clashConfig);
+        expect(nodes).toHaveLength(1);
+        expect(nodes[0]).toContain('sid=6d1f4f');
+        expect(nodes[0]).not.toContain('spx=');
+
+        const parsed = urlToClashProxy(nodes[0]);
+        expect(parsed['reality-opts']['short-id']).toBe('6d1f4f');
+        expect(parsed['reality-opts']['spider-x']).toBeUndefined();
+        expect(parsed['reality-opts']['support-x25519mlkem768']).toBe(true);
+        expect(parsed.flow).toBe('xtls-rprx-vision');
+        expect(parsed.servername).toBe('www.cloudflare.com');
+
+        const fullConfig = yaml.load(
+            generateBuiltinClashConfig(nodes.join('\n'), { addFlagEmoji: false })
+        );
+        const proxy = fullConfig.proxies[0];
+        expect(proxy['reality-opts']['short-id']).toBe('6d1f4f');
+        expect(proxy['reality-opts']['spider-x']).toBeUndefined();
+        expect(proxy['reality-opts']['support-x25519mlkem768']).toBe(true);
+        expect(proxy['reality-opts']['public-key']).toBe('public-key-value');
+        expect(proxy.flow).toBe('xtls-rprx-vision');
+        expect(proxy.uuid).toBe('22222222-2222-4222-8222-222222222222');
     });
 });

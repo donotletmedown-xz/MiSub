@@ -134,11 +134,18 @@ export function convertVlessToUrl(proxy) {
                 if (proxy['reality-opts']['public-key']) {
                     params.set('pbk', proxy['reality-opts']['public-key']);
                 }
-                if (proxy['reality-opts']['short-id']) {
-                    params.set('sid', proxy['reality-opts']['short-id']);
+                if (
+                    proxy['reality-opts']['short-id'] != null &&
+                    proxy['reality-opts']['short-id'] !== ''
+                ) {
+                    params.set('sid', String(proxy['reality-opts']['short-id']));
                 }
                 if (proxy['reality-opts']['spider-x']) {
                     params.set('spx', proxy['reality-opts']['spider-x']);
+                }
+                const mlkem = proxy['reality-opts']['support-x25519mlkem768'];
+                if (mlkem === true || mlkem === 1 || mlkem === '1' || mlkem === 'true') {
+                    params.set('x25519mlkem768', '1');
                 }
             }
             // Reality SNI

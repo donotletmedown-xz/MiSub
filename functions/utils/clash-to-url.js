@@ -30,6 +30,22 @@ function resolveHopPort(ports) {
     return port;
 }
 
+function isTruthyFlag(value) {
+    return value === true || value === 1 || value === '1' || value === 'true';
+}
+
+function appendRealityOptsParams(params, realityOpts) {
+    if (!realityOpts || typeof realityOpts !== 'object') return;
+    if (realityOpts['public-key'])
+        params.push(`pbk=${encodeURIComponent(realityOpts['public-key'])}`);
+    if (realityOpts['short-id'] != null && realityOpts['short-id'] !== '')
+        params.push(`sid=${encodeURIComponent(String(realityOpts['short-id']))}`);
+    if (realityOpts['spider-x'])
+        params.push(`spx=${encodeURIComponent(realityOpts['spider-x'])}`);
+    if (isTruthyFlag(realityOpts['support-x25519mlkem768']))
+        params.push('x25519mlkem768=1');
+}
+
 export function convertClashProxyToUrl(proxy) {
     try {
         const type = (proxy.type || '').toLowerCase();
@@ -179,12 +195,7 @@ export function convertClashProxyToUrl(proxy) {
             const realityOpts = proxy['reality-opts'];
             if (realityOpts) {
                 params.push('security=reality');
-                if (realityOpts['public-key'])
-                    params.push(`pbk=${encodeURIComponent(realityOpts['public-key'])}`);
-                if (realityOpts['short-id'])
-                    params.push(`sid=${encodeURIComponent(realityOpts['short-id'])}`);
-                if (realityOpts['spider-x'])
-                    params.push(`spx=${encodeURIComponent(realityOpts['spider-x'])}`);
+                appendRealityOptsParams(params, realityOpts);
             } else if (proxy.tls) {
                 params.push('security=tls');
             }
