@@ -3,6 +3,12 @@ import { clashFix } from '../../../utils/format-utils.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 
+function stripInternalProxyFields(proxy) {
+    if (!proxy || typeof proxy !== 'object') return proxy;
+    const { metadata, ...publicProxy } = proxy;
+    return publicProxy;
+}
+
 function mapGroupType(type) {
     const normalized = String(type || '')
         .trim()
@@ -215,7 +221,7 @@ export function renderClashFromTemplateModel(model) {
             mode: normalizedModel.settings?.dnsMode,
             proxyGroup: DNS_PROXY_GROUP,
         }),
-        proxies: normalizedModel.proxies,
+        proxies: (normalizedModel.proxies || []).map(stripInternalProxyFields),
         'proxy-groups': normalizedModel.groups
             .filter(
                 (group) =>

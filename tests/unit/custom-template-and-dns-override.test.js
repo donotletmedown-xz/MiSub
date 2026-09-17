@@ -5,6 +5,7 @@ import {
     resolveSafeDnsConfig,
     DNS_PROXY_GROUP,
 } from '../../functions/modules/subscription/safe-dns.js';
+import { extractValidNodes } from '../../functions/modules/utils/node-parser.js';
 import yaml from 'js-yaml';
 
 const sampleNodeList = [
@@ -120,6 +121,41 @@ describe('Custom template isolation & Custom DNS override', () => {
             'https://1.1.1.1/dns-query',
             'https://8.8.8.8/dns-query',
         ]);
+    });
+
+    it('preserves Reality ML-KEM and strips metadata in custom Clash templates', () => {
+        const clashYaml = `
+proxies:
+- name: vless-reality-node
+  type: vless
+  server: vless.example.com
+  port: 443
+  uuid: 22222222-2222-4222-8222-222222222222
+  tls: true
+  network: tcp
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: www.cloudflare.com
+  reality-opts:
+    public-key: public-key-value
+    short-id: 6d1f4f
+    support-x25519mlkem768: true
+`;
+        const nodes = extractValidNodes(clashYaml);
+        const output = renderClashFromIniTemplate(customIniTemplate, {
+            nodeList: nodes.join('\n'),
+            addFlagEmoji: false,
+            fileName: 'RealitySub',
+        });
+        const parsed = yaml.load(output);
+        const proxy = parsed.proxies[0];
+
+        expect(output).not.toContain('metadata:');
+        expect(proxy).not.toHaveProperty('metadata');
+        expect(proxy['reality-opts']['short-id']).toBe('6d1f4f');
+        expect(proxy['reality-opts']['support-x25519mlkem768']).toBe(true);
+        expect(proxy['reality-opts']['public-key']).toBe('public-key-value');
+        expect(proxy.flow).toBe('xtls-rprx-vision');
     });
 
     it('still retains AI policy and default safe DNS in standard builtin mode', () => {
