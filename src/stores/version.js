@@ -32,12 +32,18 @@ export const useVersionStore = defineStore('version', () => {
 
     // --- Helpers ---
     function normalizeVersion(version) {
-        return String(version || '').trim().replace(/^v/i, '');
+        return String(version || '')
+            .trim()
+            .replace(/^v/i, '');
     }
 
     function compareVersions(left, right) {
-        const a = normalizeVersion(left).split('.').map(n => parseInt(n, 10) || 0);
-        const b = normalizeVersion(right).split('.').map(n => parseInt(n, 10) || 0);
+        const a = normalizeVersion(left)
+            .split('.')
+            .map((n) => parseInt(n, 10) || 0);
+        const b = normalizeVersion(right)
+            .split('.')
+            .map((n) => parseInt(n, 10) || 0);
         const maxLen = Math.max(a.length, b.length);
         for (let i = 0; i < maxLen; i += 1) {
             const av = a[i] || 0;
@@ -59,7 +65,7 @@ export const useVersionStore = defineStore('version', () => {
             if (release?.tag_name) {
                 latestRelease.value = release;
                 const comparison = compareVersions(release.tag_name, currentVersion.value);
-                
+
                 if (comparison > 0) {
                     showUpdateNotice.value = true;
                 } else if (comparison === 0 && !suppressModal) {
@@ -101,6 +107,6 @@ export const useVersionStore = defineStore('version', () => {
         checkVersion,
         openModal,
         closeModal,
-        suppressUpdateModal
+        suppressUpdateModal,
     };
 });

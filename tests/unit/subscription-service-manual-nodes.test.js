@@ -15,21 +15,21 @@ describe('subscription-service 手动节点健壮性', () => {
                 name: '坏节点',
                 // 故意传非字符串，模拟历史脏数据
                 url: null,
-                enabled: true
+                enabled: true,
             },
             {
                 id: 'bad-2',
                 name: '坏节点2',
                 // 非法编码，历史导入可能出现
                 url: 'vless://uuid@example.com:443?security=tls#%E0%A4%A',
-                enabled: true
+                enabled: true,
             },
             {
                 id: 'ok-1',
                 name: '正常节点',
                 url: 'trojan://pass@example.com:443#ok',
-                enabled: true
-            }
+                enabled: true,
+            },
         ];
 
         const result = await generateCombinedNodeList(
@@ -41,7 +41,7 @@ describe('subscription-service 手动节点健壮性', () => {
             {
                 enableManualNodes: true,
                 manualNodePrefix: '手动节点',
-                enableSubscriptions: true
+                enableSubscriptions: true,
             },
             false
         );
@@ -53,26 +53,31 @@ describe('subscription-service 手动节点健壮性', () => {
 
     it('使用 Fetch Proxy 时应通过 ua 参数把有效 UA 传给代理', async () => {
         const clashYaml = `proxies:\n  - name: HK 1\n    type: trojan\n    server: example.com\n    port: 443\n    password: pass\n`;
-        vi.stubGlobal('fetch', vi.fn(async (request) => {
-            const requestUrl = new URL(request.url);
-            if (requestUrl.searchParams.get('ua') === 'clash-verge/v2.4.3') {
-                return new Response(clashYaml, { status: 200 });
-            }
-            return new Response('<html>504 Gateway Time-out</html>', { status: 504 });
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (request) => {
+                const requestUrl = new URL(request.url);
+                if (requestUrl.searchParams.get('ua') === 'clash-verge/v2.4.3') {
+                    return new Response(clashYaml, { status: 200 });
+                }
+                return new Response('<html>504 Gateway Time-out</html>', { status: 504 });
+            })
+        );
 
         const result = await generateCombinedNodeList(
             {},
             { enableAccessLog: false },
             'ClashMeta',
-            [{
-                id: 'proxy-ua-sub',
-                name: '机场',
-                url: 'http://example.com/link/token?clash=2',
-                fetchProxy: 'https://fetchproxy.example/api?url=',
-                customUserAgent: 'clash-verge/v2.4.3',
-                enabled: true
-            }],
+            [
+                {
+                    id: 'proxy-ua-sub',
+                    name: '机场',
+                    url: 'http://example.com/link/token?clash=2',
+                    fetchProxy: 'https://fetchproxy.example/api?url=',
+                    customUserAgent: 'clash-verge/v2.4.3',
+                    enabled: true,
+                },
+            ],
             '',
             { enableSubscriptions: true },
             false
@@ -86,19 +91,30 @@ describe('subscription-service 手动节点健壮性', () => {
 
     it('订阅源 customUserAgent 应优先于默认 UA 策略', async () => {
         const clashYaml = `proxies:\n  - name: HK 1\n    type: trojan\n    server: example.com\n    port: 443\n    password: pass\n`;
-        vi.stubGlobal('fetch', vi.fn(async (request) => {
-            const ua = request.headers.get('user-agent');
-            if (ua === 'clash-verge/v2.4.3') {
-                return new Response(clashYaml, { status: 200 });
-            }
-            return new Response('<html>504 Gateway Time-out</html>', { status: 504 });
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (request) => {
+                const ua = request.headers.get('user-agent');
+                if (ua === 'clash-verge/v2.4.3') {
+                    return new Response(clashYaml, { status: 200 });
+                }
+                return new Response('<html>504 Gateway Time-out</html>', { status: 504 });
+            })
+        );
 
         const result = await generateCombinedNodeList(
             {},
             { enableAccessLog: false },
             'ClashMeta',
-            [{ id: 'custom-ua-sub', name: '机场', url: 'http://example.com/link/token', customUserAgent: 'clash-verge/v2.4.3', enabled: true }],
+            [
+                {
+                    id: 'custom-ua-sub',
+                    name: '机场',
+                    url: 'http://example.com/link/token',
+                    customUserAgent: 'clash-verge/v2.4.3',
+                    enabled: true,
+                },
+            ],
             '',
             { enableSubscriptions: true },
             false
@@ -109,19 +125,29 @@ describe('subscription-service 手动节点健壮性', () => {
 
     it('带 clash 参数的机场订阅应使用 Clash UA 拉取', async () => {
         const clashYaml = `proxies:\n  - name: HK 1\n    type: trojan\n    server: example.com\n    port: 443\n    password: pass\n`;
-        vi.stubGlobal('fetch', vi.fn(async (request) => {
-            const ua = request.headers.get('user-agent');
-            if (ua === 'clash-verge/v2.4.3') {
-                return new Response(clashYaml, { status: 200 });
-            }
-            return new Response('<html>504 Gateway Time-out</html>', { status: 504 });
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (request) => {
+                const ua = request.headers.get('user-agent');
+                if (ua === 'clash-verge/v2.4.3') {
+                    return new Response(clashYaml, { status: 200 });
+                }
+                return new Response('<html>504 Gateway Time-out</html>', { status: 504 });
+            })
+        );
 
         const result = await generateCombinedNodeList(
             {},
             { enableAccessLog: false },
             'ClashMeta',
-            [{ id: 'clash-sub', name: '机场', url: 'http://example.com/link/token?clash=2', enabled: true }],
+            [
+                {
+                    id: 'clash-sub',
+                    name: '机场',
+                    url: 'http://example.com/link/token?clash=2',
+                    enabled: true,
+                },
+            ],
             '',
             { enableSubscriptions: true },
             false
@@ -143,9 +169,12 @@ describe('subscription-service 手动节点健壮性', () => {
             password: 'password',
             'obfs-param': 'microsoft.com',
             'protocol-param': 'user:pass',
-            udp: true
+            udp: true,
         });
-        vi.stubGlobal('fetch', vi.fn(async () => new Response(ssrUrl, { status: 200 })));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => new Response(ssrUrl, { status: 200 }))
+        );
 
         const result = await generateCombinedNodeList(
             {},

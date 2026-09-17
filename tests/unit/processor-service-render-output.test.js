@@ -1,22 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProcessorService, isClashYamlProfileTemplate, isIniTemplateSource } from '../../functions/services/processor-service.js';
+import {
+    ProcessorService,
+    isClashYamlProfileTemplate,
+    isIniTemplateSource,
+} from '../../functions/services/processor-service.js';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
 
 describe('ProcessorService.renderOutput', () => {
     const storageAdapter = {
         get: vi.fn().mockResolvedValue(null),
-        put: vi.fn()
+        put: vi.fn(),
     };
 
     beforeEach(() => {
-        vi.stubGlobal('fetch', vi.fn(async () => new Response(`
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(
+                async () =>
+                    new Response(
+                        `
 [Proxy Group]
 MyGroup = select, HK-01, DIRECT
 
 [Rule]
 MATCH,MyGroup
-`, { status: 200 })));
+`,
+                        { status: 200 }
+                    )
+            )
+        );
     });
 
     afterEach(() => {
@@ -25,7 +38,12 @@ MATCH,MyGroup
     });
 
     it('recognizes remote ini templates with query strings', async () => {
-        expect(isIniTemplateSource({ kind: 'remote', value: 'https://example.com/template.ini?token=abc' })).toBe(true);
+        expect(
+            isIniTemplateSource({
+                kind: 'remote',
+                value: 'https://example.com/template.ini?token=abc',
+            })
+        ).toBe(true);
 
         const result = await ProcessorService.renderOutput({
             targetFormat: 'clash',
@@ -35,7 +53,7 @@ MATCH,MyGroup
             builtinOptions: { ruleLevel: 'std', enableUdp: true, skipCertVerify: false },
             templateSource: { kind: 'remote', value: 'https://example.com/template.ini?token=abc' },
             managedConfigUrl: 'https://example.com/sub',
-            storageAdapter
+            storageAdapter,
         });
 
         expect(result.contentType).toBe('application/x-yaml; charset=utf-8');
@@ -51,7 +69,7 @@ MATCH,MyGroup
             config: {},
             builtinOptions: { ruleLevel: 'base' },
             managedConfigUrl: 'https://example.com/sub',
-            storageAdapter
+            storageAdapter,
         });
 
         expect(result.contentType).toBe('application/x-yaml; charset=utf-8');
@@ -60,7 +78,12 @@ MATCH,MyGroup
     });
 
     it('renders remote Clash YAML profile templates by injecting MiSub nodes locally', async () => {
-        vi.stubGlobal('fetch', vi.fn(async () => new Response(`
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(
+                async () =>
+                    new Response(
+                        `
 mode: rule
 mixed-port: 7890
 proxy-groups:
@@ -82,7 +105,11 @@ rule-providers:
 rules:
   - RULE-SET,AI,🚀 节点选择
   - MATCH,🚀 节点选择
-`, { status: 200 })));
+`,
+                        { status: 200 }
+                    )
+            )
+        );
 
         const result = await ProcessorService.renderOutput({
             targetFormat: 'clash',
@@ -90,9 +117,12 @@ rules:
             subName: 'ShellCrash',
             config: { UpdateInterval: 86400 },
             builtinOptions: { ruleLevel: 'std', enableUdp: true, skipCertVerify: false },
-            templateSource: { kind: 'remote', value: 'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/refs/heads/main/subconverter-shellcrash-needs.yaml' },
+            templateSource: {
+                kind: 'remote',
+                value: 'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/refs/heads/main/subconverter-shellcrash-needs.yaml',
+            },
             managedConfigUrl: 'https://example.com/sub?clash',
-            storageAdapter
+            storageAdapter,
         });
 
         expect(result.contentType).toBe('application/x-yaml; charset=utf-8');
@@ -108,13 +138,15 @@ rules:
     });
 
     it('detects Clash YAML profile templates by structure instead of treating them as ini templates', () => {
-        expect(isClashYamlProfileTemplate(`
+        expect(
+            isClashYamlProfileTemplate(`
 proxy-groups:
   - name: 🚀 节点选择
     type: select
 rules:
   - MATCH,🚀 节点选择
-`)).toBe(true);
+`)
+        ).toBe(true);
         expect(isClashYamlProfileTemplate('[Proxy Group]\nProxy = select, A')).toBe(false);
     });
 
@@ -127,11 +159,11 @@ rules:
             builtinOptions: {
                 ruleLevel: 'std',
                 userAgent: 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box',
-                searchParams: new URLSearchParams('')
+                searchParams: new URLSearchParams(''),
             },
             templateSource: { kind: 'none', value: '' },
             managedConfigUrl: '',
-            storageAdapter
+            storageAdapter,
         });
 
         expect(result.contentType).toBe('application/x-yaml; charset=utf-8');
@@ -151,11 +183,11 @@ rules:
                 ruleLevel: 'std',
                 userAgent: 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box',
                 hiddifyCompatible: true,
-                searchParams: new URLSearchParams('')
+                searchParams: new URLSearchParams(''),
             },
             templateSource: { kind: 'remote', value: 'https://example.com/template.ini' },
             managedConfigUrl: '',
-            storageAdapter
+            storageAdapter,
         });
 
         expect(fetch).not.toHaveBeenCalled();
@@ -174,10 +206,12 @@ rules:
             config: { UpdateInterval: 86400 },
             builtinOptions: { ruleLevel: 'std', skipCertVerify: false, enableUdp: false },
             managedConfigUrl: 'https://example.com/sub?target=quanx&builtin=1',
-            storageAdapter
+            storageAdapter,
         });
 
-        expect(result.content).toContain('#!MANAGED-CONFIG https://example.com/sub?target=quanx&builtin=1 interval=86400 strict=false');
+        expect(result.content).toContain(
+            '#!MANAGED-CONFIG https://example.com/sub?target=quanx&builtin=1 interval=86400 strict=false'
+        );
         expect(result.content).toContain('[general]');
         expect(result.content).toContain('[dns]');
     });

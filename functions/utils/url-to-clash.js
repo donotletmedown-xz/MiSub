@@ -11,15 +11,19 @@ function isVirtualInfoProxy(proxy) {
     if (!proxy || typeof proxy !== 'object') return false;
 
     const type = String(proxy.type || '').toLowerCase();
-    const server = String(proxy.server || '').trim().toLowerCase();
+    const server = String(proxy.server || '')
+        .trim()
+        .toLowerCase();
     const password = String(proxy.password || '').trim();
     const name = String(proxy.name || '').trim();
 
-    return type === 'trojan'
-        && server === '127.0.0.1'
-        && Number(proxy.port) === 443
-        && password === VIRTUAL_INFO_NODE_PASSWORD
-        && /(?:流量剩余|到期时间|您的订阅已到期)/.test(name);
+    return (
+        type === 'trojan' &&
+        server === '127.0.0.1' &&
+        Number(proxy.port) === 443 &&
+        password === VIRTUAL_INFO_NODE_PASSWORD &&
+        /(?:流量剩余|到期时间|您的订阅已到期)/.test(name)
+    );
 }
 
 /**
@@ -32,9 +36,10 @@ function parseQueryParams(url) {
     if (queryIndex === -1) return new URLSearchParams();
 
     const hashIndex = url.indexOf('#');
-    const queryString = hashIndex > queryIndex
-        ? url.substring(queryIndex + 1, hashIndex)
-        : url.substring(queryIndex + 1);
+    const queryString =
+        hashIndex > queryIndex
+            ? url.substring(queryIndex + 1, hashIndex)
+            : url.substring(queryIndex + 1);
 
     return new URLSearchParams(queryString);
 }
@@ -92,7 +97,7 @@ function parseHostPort(hostPort) {
     const parts = hostPort.split(':');
     return {
         server: parts[0],
-        port: parseInt(parts[1]) || 443
+        port: parseInt(parts[1]) || 443,
     };
 }
 
@@ -130,7 +135,7 @@ function parseVlessUrl(url) {
             type: 'vless',
             server,
             port,
-            uuid
+            uuid,
         };
 
         // 网络类型
@@ -150,120 +155,81 @@ function parseVlessUrl(url) {
                 proxy['ws-opts'] = wsOpts;
             }
         }
-        
-       // xHTTP 配置
-if (network === 'xhttp') {
-    const xhttpOpts = {};
 
-    const path =
-        params.get('xhttp-path') ||
-        params.get('path');
+        // xHTTP 配置
+        if (network === 'xhttp') {
+            const xhttpOpts = {};
 
-    const host =
-        params.get('xhttp-host') ||
-        params.get('host') ||
-        params.get('sni');
+            const path = params.get('xhttp-path') || params.get('path');
 
-    if (path) {
-        xhttpOpts.path = path;
-    }
+            const host = params.get('xhttp-host') || params.get('host') || params.get('sni');
 
-    if (host) {
-        xhttpOpts.host = host;
-
-        // 保留 MiSub 原有逻辑
-        xhttpOpts.headers = {
-            Host: host
-        };
-    }
-
-    // XHTTP mode
-    if (params.get('mode')) {
-        xhttpOpts.mode = params.get('mode');
-    }
-
-    /*
-     * Xray XHTTP 分享链接中的高级参数通常保存在 extra JSON 中：
-     *
-     * extra={
-     *   "xPaddingObfsMode": true,
-     *   "xPaddingMethod": "tokenish",
-     *   "xPaddingPlacement": "queryInHeader",
-     *   "xPaddingHeader": "...",
-     *   "xPaddingKey": "..."
-     * }
-     *
-     * 转换为 Mihomo / Clash Meta 的 xhttp-opts 字段。
-     */
-    const extraRaw = params.get('extra');
-
-    if (extraRaw) {
-        try {
-            const extra = JSON.parse(extraRaw);
-
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    extra,
-                    'xPaddingObfsMode'
-                )
-            ) {
-                xhttpOpts['x-padding-obfs-mode'] =
-                    extra.xPaddingObfsMode;
+            if (path) {
+                xhttpOpts.path = path;
             }
 
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    extra,
-                    'xPaddingMethod'
-                )
-            ) {
-                xhttpOpts['x-padding-method'] =
-                    extra.xPaddingMethod;
+            if (host) {
+                xhttpOpts.host = host;
+
+                // 保留 MiSub 原有逻辑
+                xhttpOpts.headers = {
+                    Host: host,
+                };
             }
 
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    extra,
-                    'xPaddingPlacement'
-                )
-            ) {
-                xhttpOpts['x-padding-placement'] =
-                    extra.xPaddingPlacement;
+            // XHTTP mode
+            if (params.get('mode')) {
+                xhttpOpts.mode = params.get('mode');
             }
 
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    extra,
-                    'xPaddingHeader'
-                )
-            ) {
-                xhttpOpts['x-padding-header'] =
-                    extra.xPaddingHeader;
+            /*
+             * Xray XHTTP 分享链接中的高级参数通常保存在 extra JSON 中：
+             *
+             * extra={
+             *   "xPaddingObfsMode": true,
+             *   "xPaddingMethod": "tokenish",
+             *   "xPaddingPlacement": "queryInHeader",
+             *   "xPaddingHeader": "...",
+             *   "xPaddingKey": "..."
+             * }
+             *
+             * 转换为 Mihomo / Clash Meta 的 xhttp-opts 字段。
+             */
+            const extraRaw = params.get('extra');
+
+            if (extraRaw) {
+                try {
+                    const extra = JSON.parse(extraRaw);
+
+                    if (Object.prototype.hasOwnProperty.call(extra, 'xPaddingObfsMode')) {
+                        xhttpOpts['x-padding-obfs-mode'] = extra.xPaddingObfsMode;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(extra, 'xPaddingMethod')) {
+                        xhttpOpts['x-padding-method'] = extra.xPaddingMethod;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(extra, 'xPaddingPlacement')) {
+                        xhttpOpts['x-padding-placement'] = extra.xPaddingPlacement;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(extra, 'xPaddingHeader')) {
+                        xhttpOpts['x-padding-header'] = extra.xPaddingHeader;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(extra, 'xPaddingKey')) {
+                        xhttpOpts['x-padding-key'] = extra.xPaddingKey;
+                    }
+                } catch (e) {
+                    // extra 非法时不能让整个订阅转换失败
+                    console.warn('[MiSub] XHTTP extra 参数解析失败:', e);
+                }
             }
 
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    extra,
-                    'xPaddingKey'
-                )
-            ) {
-                xhttpOpts['x-padding-key'] =
-                    extra.xPaddingKey;
+            if (Object.keys(xhttpOpts).length > 0) {
+                proxy['xhttp-opts'] = xhttpOpts;
             }
-
-        } catch (e) {
-            // extra 非法时不能让整个订阅转换失败
-            console.warn(
-                '[MiSub] XHTTP extra 参数解析失败:',
-                e
-            );
         }
-    }
-
-    if (Object.keys(xhttpOpts).length > 0) {
-        proxy['xhttp-opts'] = xhttpOpts;
-    }
-}
 
         // gRPC 配置
         if (network === 'grpc') {
@@ -310,14 +276,14 @@ if (network === 'xhttp') {
             proxy['skip-cert-verify'] = true;
         }
 
-// SNI (支持 sni 和 peer 两种参数名，Shadowrocket 使用 peer)
-      if (params.get('sni')) {
-        proxy.servername = params.get('sni');
-        proxy.sni = params.get('sni');
-      } else if (params.get('peer')) {
-        proxy.servername = params.get('peer');
-        proxy.sni = params.get('peer');
-      }
+        // SNI (支持 sni 和 peer 两种参数名，Shadowrocket 使用 peer)
+        if (params.get('sni')) {
+            proxy.servername = params.get('sni');
+            proxy.sni = params.get('sni');
+        } else if (params.get('peer')) {
+            proxy.servername = params.get('peer');
+            proxy.sni = params.get('peer');
+        }
 
         // Fingerprint
         if (params.get('fp')) {
@@ -361,7 +327,7 @@ function parseTrojanUrl(url) {
         let password = body.substring(0, atIndex);
         try {
             password = decodeURIComponent(password);
-        } catch { }
+        } catch {}
 
         let serverPart = body.substring(atIndex + 1);
         const queryIndex = serverPart.indexOf('?');
@@ -382,7 +348,7 @@ function parseTrojanUrl(url) {
             type: 'trojan',
             server,
             port,
-            password
+            password,
         };
 
         // 网络类型
@@ -406,7 +372,8 @@ function parseTrojanUrl(url) {
         // gRPC 配置
         if (network === 'grpc') {
             const grpcOpts = {};
-            if (params.get('serviceName')) grpcOpts['grpc-service-name'] = params.get('serviceName');
+            if (params.get('serviceName'))
+                grpcOpts['grpc-service-name'] = params.get('serviceName');
             if (params.get('mode')) grpcOpts['grpc-mode'] = params.get('mode');
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
@@ -474,7 +441,7 @@ function parseVmessUrl(url) {
             port: parseInt(config.port),
             uuid: config.id,
             alterId: parseInt(config.aid) || 0,
-            cipher: config.scy || 'auto'
+            cipher: config.scy || 'auto',
         };
 
         // 网络类型
@@ -499,7 +466,7 @@ function parseVmessUrl(url) {
         if (network === 'grpc') {
             const grpcOpts = {};
             if (config.path) grpcOpts['grpc-service-name'] = config.path; // vmess json sometimes use path for serviceName
-            if (config.host) grpcOpts['grpc-service-name'] = config.host; 
+            if (config.host) grpcOpts['grpc-service-name'] = config.host;
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
             }
@@ -509,7 +476,7 @@ function parseVmessUrl(url) {
         if (network === 'h2') {
             const h2Opts = {};
             if (config.path) h2Opts.path = config.path;
-            if (config.host) h2Opts.host = config.host.split(',').map(h => h.trim());
+            if (config.host) h2Opts.host = config.host.split(',').map((h) => h.trim());
             if (Object.keys(h2Opts).length > 0) {
                 proxy['h2-opts'] = h2Opts;
             }
@@ -520,8 +487,8 @@ function parseVmessUrl(url) {
             const httpOpts = {
                 path: config.path || '/',
                 headers: {
-                    Host: config.host ? config.host.split(',').map(h => h.trim()) : []
-                }
+                    Host: config.host ? config.host.split(',').map((h) => h.trim()) : [],
+                },
             };
             proxy['http-opts'] = httpOpts;
         }
@@ -542,7 +509,10 @@ function parseVmessUrl(url) {
             proxy.tls = true;
             if (config.sni) proxy.servername = config.sni;
             if (config.fp) proxy['client-fingerprint'] = config.fp;
-            if (config.alpn) proxy.alpn = String(config.alpn).split(',').map(s => s.trim());
+            if (config.alpn)
+                proxy.alpn = String(config.alpn)
+                    .split(',')
+                    .map((s) => s.trim());
         }
 
         // UDP
@@ -584,7 +554,11 @@ function parseSsPlugin(pluginStr) {
             const key = item.substring(0, eqIndex);
             let val = item.substring(eqIndex + 1);
             // 处理 SIP002 转义：\= -> =, \; -> ;, \? -> ?
-            val = val.replace(/\\=/g, '=').replace(/\\;/g, ';').replace(/\\\?/g, '?').replace(/\\:/g, ':');
+            val = val
+                .replace(/\\=/g, '=')
+                .replace(/\\;/g, ';')
+                .replace(/\\\?/g, '?')
+                .replace(/\\:/g, ':');
             // 尝试处理布尔值字符串
             if (val === 'true') val = true;
             if (val === 'false') val = false;
@@ -678,7 +652,7 @@ function parseSsUrl(url) {
             server,
             port,
             cipher: method,
-            password
+            password,
         };
 
         // [核心修复] 解析并补全插件信息
@@ -693,9 +667,13 @@ function parseSsUrl(url) {
                 const obfsHost = params.get('obfs-host');
                 if (obfsMode) proxy['plugin-opts'].mode = obfsMode;
                 if (obfsHost) proxy['plugin-opts'].host = obfsHost;
-                
+
                 // 协议兼容性映射 (TLS / Host)
-                if (pluginDetails.opts.tls || pluginDetails.opts.mode?.includes('tls') || pluginDetails.opts.security === 'tls') {
+                if (
+                    pluginDetails.opts.tls ||
+                    pluginDetails.opts.mode?.includes('tls') ||
+                    pluginDetails.opts.security === 'tls'
+                ) {
                     proxy.tls = true;
                 }
                 if (pluginDetails.opts.host) {
@@ -733,7 +711,7 @@ function parseHysteria2Url(url) {
         let password = body.substring(0, atIndex);
         try {
             password = decodeURIComponent(password);
-        } catch { }
+        } catch {}
 
         let serverPart = body.substring(atIndex + 1);
         const queryIndex = serverPart.indexOf('?');
@@ -754,7 +732,9 @@ function parseHysteria2Url(url) {
             type: 'hysteria2',
             server,
             port,
-            password
+            password,
+            // Stash 使用 auth 字段而非 password，同时输出双字段以兼容 Stash/Clash Meta
+            auth: password,
         };
 
         // SNI
@@ -771,7 +751,7 @@ function parseHysteria2Url(url) {
         // [Hysteria2] handshake timeout
         const handshakeTimeout = params.get('handshake-timeout');
         if (handshakeTimeout) {
-            proxy["handshake-timeout"] = parseInt(handshakeTimeout, 10);
+            proxy['handshake-timeout'] = parseInt(handshakeTimeout, 10);
         }
 
         // Obfs
@@ -800,13 +780,16 @@ function parseHysteria2Url(url) {
         const stunServers = params.get('stun-servers');
         if (realmId || realmToken || realmServerUrl || stunServers) {
             proxy['realm-opts'] = {
-                enable: true
+                enable: true,
             };
             if (realmId) proxy['realm-opts']['realm-id'] = realmId;
             if (realmToken) proxy['realm-opts'].token = realmToken;
             if (realmServerUrl) proxy['realm-opts']['server-url'] = realmServerUrl;
             if (stunServers) {
-                proxy['realm-opts']['stun-servers'] = stunServers.split(',').map(item => item.trim()).filter(Boolean);
+                proxy['realm-opts']['stun-servers'] = stunServers
+                    .split(',')
+                    .map((item) => item.trim())
+                    .filter(Boolean);
             }
         }
 
@@ -815,12 +798,11 @@ function parseHysteria2Url(url) {
             proxy['dialer-proxy'] = params.get('dp');
         }
 
-
-return proxy;
-} catch (e) {
-console.error('解析 Hysteria2 URL 失败:', e);
-return null;
-}
+        return proxy;
+    } catch (e) {
+        console.error('解析 Hysteria2 URL 失败:', e);
+        return null;
+    }
 }
 
 /**
@@ -872,7 +854,7 @@ function parseTuicUrl(url) {
             server,
             port,
             uuid,
-            password
+            password,
         };
 
         // SNI
@@ -888,12 +870,19 @@ function parseTuicUrl(url) {
         }
 
         // Skip cert verify
-        if (params.get('allowInsecure') === '1' || params.get('insecure') === '1' || params.get('allow_insecure') === '1') {
+        if (
+            params.get('allowInsecure') === '1' ||
+            params.get('insecure') === '1' ||
+            params.get('allow_insecure') === '1'
+        ) {
             proxy['skip-cert-verify'] = true;
         }
-        
+
         // 拥塞控制
-        const congestionControl = params.get('congestion_control') || params.get('congestion-control') || params.get('congestion-controller');
+        const congestionControl =
+            params.get('congestion_control') ||
+            params.get('congestion-control') ||
+            params.get('congestion-controller');
         if (congestionControl) {
             proxy['congestion-controller'] = congestionControl;
         }
@@ -913,7 +902,11 @@ function parseTuicUrl(url) {
             proxy['udp-over-stream'] = false;
         }
 
-        const zeroRttHandshake = params.get('zero_rtt_handshake') || params.get('zero-rtt-handshake') || params.get('reduce_rtt') || params.get('reduce-rtt');
+        const zeroRttHandshake =
+            params.get('zero_rtt_handshake') ||
+            params.get('zero-rtt-handshake') ||
+            params.get('reduce_rtt') ||
+            params.get('reduce-rtt');
         if (zeroRttHandshake === '1' || zeroRttHandshake === 'true') {
             proxy['zero-rtt-handshake'] = true;
             proxy['reduce-rtt'] = true;
@@ -926,10 +919,13 @@ function parseTuicUrl(url) {
             proxy.heartbeat = params.get('heartbeat');
         }
         if (params.get('heartbeat_interval') || params.get('heartbeat-interval')) {
-            proxy['heartbeat-interval'] = params.get('heartbeat_interval') || params.get('heartbeat-interval');
+            proxy['heartbeat-interval'] =
+                params.get('heartbeat_interval') || params.get('heartbeat-interval');
         }
         if (params.get('request_timeout') || params.get('request-timeout')) {
-            proxy['request-timeout'] = Number(params.get('request_timeout') || params.get('request-timeout'));
+            proxy['request-timeout'] = Number(
+                params.get('request_timeout') || params.get('request-timeout')
+            );
         }
         if (params.get('cwnd')) {
             proxy.cwnd = Number(params.get('cwnd'));
@@ -938,10 +934,14 @@ function parseTuicUrl(url) {
             proxy['bbr-profile'] = params.get('bbr_profile') || params.get('bbr-profile');
         }
         if (params.get('max_udp_relay_packet_size') || params.get('max-udp-relay-packet-size')) {
-            proxy['max-udp-relay-packet-size'] = Number(params.get('max_udp_relay_packet_size') || params.get('max-udp-relay-packet-size'));
+            proxy['max-udp-relay-packet-size'] = Number(
+                params.get('max_udp_relay_packet_size') || params.get('max-udp-relay-packet-size')
+            );
         }
         if (params.get('max_open_streams') || params.get('max-open-streams')) {
-            proxy['max-open-streams'] = Number(params.get('max_open_streams') || params.get('max-open-streams'));
+            proxy['max-open-streams'] = Number(
+                params.get('max_open_streams') || params.get('max-open-streams')
+            );
         }
 
         const disableSni = params.get('disable_sni') || params.get('disable-sni');
@@ -973,119 +973,119 @@ function parseTuicUrl(url) {
 }
 
 /**
-* 将 WireGuard URL 转换为 Clash 代理对象
-* @param {string} url - WireGuard URL
-* @returns {Object|null} Clash 代理对象
-*/
+ * 将 WireGuard URL 转换为 Clash 代理对象
+ * @param {string} url - WireGuard URL
+ * @returns {Object|null} Clash 代理对象
+ */
 function parseWireguardUrl(url) {
-try {
-// wireguard://privatekey@server:port?params#name
-const body = url.substring('wireguard://'.length);
+    try {
+        // wireguard://privatekey@server:port?params#name
+        const body = url.substring('wireguard://'.length);
 
-const atIndex = body.indexOf('@');
-if (atIndex === -1) return null;
+        const atIndex = body.indexOf('@');
+        if (atIndex === -1) return null;
 
-let privateKey = body.substring(0, atIndex);
-try {
-privateKey = decodeURIComponent(privateKey);
-} catch { }
+        let privateKey = body.substring(0, atIndex);
+        try {
+            privateKey = decodeURIComponent(privateKey);
+        } catch {}
 
-let serverPart = body.substring(atIndex + 1);
-const queryIndex = serverPart.indexOf('?');
-const hashIndex = serverPart.indexOf('#');
+        let serverPart = body.substring(atIndex + 1);
+        const queryIndex = serverPart.indexOf('?');
+        const hashIndex = serverPart.indexOf('#');
 
-if (queryIndex !== -1) {
-serverPart = serverPart.substring(0, queryIndex);
-} else if (hashIndex !== -1) {
-serverPart = serverPart.substring(0, hashIndex);
-}
+        if (queryIndex !== -1) {
+            serverPart = serverPart.substring(0, queryIndex);
+        } else if (hashIndex !== -1) {
+            serverPart = serverPart.substring(0, hashIndex);
+        }
 
-const { server, port } = parseHostPort(serverPart);
-const params = parseQueryParams(url);
-const name = extractName(url);
+        const { server, port } = parseHostPort(serverPart);
+        const params = parseQueryParams(url);
+        const name = extractName(url);
 
-    const proxy = {
-        name: name || `WireGuard-${server}`,
-        type: 'wireguard',
-        server,
-        port,
-        'private-key': privateKey,
-        'remote-dns-resolve': true,
-        udp: true
-    };
+        const proxy = {
+            name: name || `WireGuard-${server}`,
+            type: 'wireguard',
+            server,
+            port,
+            'private-key': privateKey,
+            'remote-dns-resolve': true,
+            udp: true,
+        };
 
-// 公钥
-const publicKey = params.get('publickey') || params.get('public-key');
-if (publicKey) {
-proxy['public-key'] = publicKey;
-}
+        // 公钥
+        const publicKey = params.get('publickey') || params.get('public-key');
+        if (publicKey) {
+            proxy['public-key'] = publicKey;
+        }
 
-// 本地地址。保留 WireGuard 的 CIDR 和多地址形状，避免转换往返时丢失
-// 隧道前缀；同时提供 ipv6 兼容字段给需要独立 IPv6 字段的渲染器。
-const address = params.get('address');
-if (address) {
-    const addresses = address
-        .split(',')
-        .map(a => a.trim())
-        .filter(Boolean);
+        // 本地地址。保留 WireGuard 的 CIDR 和多地址形状，避免转换往返时丢失
+        // 隧道前缀；同时提供 ipv6 兼容字段给需要独立 IPv6 字段的渲染器。
+        const address = params.get('address');
+        if (address) {
+            const addresses = address
+                .split(',')
+                .map((a) => a.trim())
+                .filter(Boolean);
 
-    const ipv6 = addresses.find(a => a.includes(':'));
+            const ipv6 = addresses.find((a) => a.includes(':'));
 
-    if (addresses.length > 0) proxy.ip = addresses;
-    if (ipv6) proxy.ipv6 = ipv6;
-}
+            if (addresses.length > 0) proxy.ip = addresses;
+            if (ipv6) proxy.ipv6 = ipv6;
+        }
 
-// Allowed IPs
-const allowedIPs = params.get('allowedips') || params.get('allowed-ips');
-if (allowedIPs) {
-proxy['allowed-ips'] = allowedIPs.split(',').map(a => a.trim());
-}
+        // Allowed IPs
+        const allowedIPs = params.get('allowedips') || params.get('allowed-ips');
+        if (allowedIPs) {
+            proxy['allowed-ips'] = allowedIPs.split(',').map((a) => a.trim());
+        }
 
-// Reserved (Cloudflare WARP)
-const reserved = params.get('reserved');
-if (reserved) {
-const reservedArr = reserved.split(',').map(n => parseInt(n.trim()));
-if (reservedArr.every(n => !isNaN(n))) {
-proxy.reserved = reservedArr;
-}
-}
+        // Reserved (Cloudflare WARP)
+        const reserved = params.get('reserved');
+        if (reserved) {
+            const reservedArr = reserved.split(',').map((n) => parseInt(n.trim()));
+            if (reservedArr.every((n) => !isNaN(n))) {
+                proxy.reserved = reservedArr;
+            }
+        }
 
-// MTU
-const mtu = params.get('mtu');
-if (mtu) {
-proxy.mtu = parseInt(mtu);
-}
+        // MTU
+        const mtu = params.get('mtu');
+        if (mtu) {
+            proxy.mtu = parseInt(mtu);
+        }
 
-// DNS
-const dns = params.get('dns');
-if (dns) {
-proxy.dns = dns.split(',').map(d => d.trim());
-}
+        // DNS
+        const dns = params.get('dns');
+        if (dns) {
+            proxy.dns = dns.split(',').map((d) => d.trim());
+        }
 
-// Keepalive
-const keepalive = params.get('keepalive');
-if (keepalive) {
-proxy['persistent-keepalive'] = parseInt(keepalive);
-}
+        // Keepalive
+        const keepalive = params.get('keepalive');
+        if (keepalive) {
+            proxy['persistent-keepalive'] = parseInt(keepalive);
+        }
 
-// Preshared Key
-const presharedKey = params.get('presharedkey') || params.get('preshared-key');
-if (presharedKey) {
-proxy['preshared-key'] = presharedKey;
-}
+        // Preshared Key
+        const presharedKey = params.get('presharedkey') || params.get('preshared-key');
+        if (presharedKey) {
+            proxy['preshared-key'] = presharedKey;
+        }
 
-return proxy;
-} catch (e) {
-console.error('解析 WireGuard URL 失败:', e);
-return null;
-}
+        return proxy;
+    } catch (e) {
+        console.error('解析 WireGuard URL 失败:', e);
+        return null;
+    }
 }
 
 /**
-* 将 Snell URL 转换为 Clash 代理对象
-* @param {string} url - Snell URL
-* @returns {Object|null} Clash 代理对象
-*/
+ * 将 Snell URL 转换为 Clash 代理对象
+ * @param {string} url - Snell URL
+ * @returns {Object|null} Clash 代理对象
+ */
 function parseSnellUrl(url) {
     try {
         const body = url.substring('snell://'.length);
@@ -1094,7 +1094,9 @@ function parseSnellUrl(url) {
         const atIndex = body.indexOf('@');
         if (atIndex !== -1) {
             psk = body.substring(0, atIndex);
-            try { psk = decodeURIComponent(psk); } catch { }
+            try {
+                psk = decodeURIComponent(psk);
+            } catch {}
             serverPart = body.substring(atIndex + 1);
         } else {
             serverPart = body;
@@ -1151,7 +1153,9 @@ function parseAnytlsUrl(url) {
         const atIndex = body.indexOf('@');
         if (atIndex !== -1) {
             password = body.substring(0, atIndex);
-            try { password = decodeURIComponent(password); } catch { }
+            try {
+                password = decodeURIComponent(password);
+            } catch {}
             serverPart = body.substring(atIndex + 1);
         } else {
             serverPart = body;
@@ -1171,26 +1175,28 @@ function parseAnytlsUrl(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = { 
-            name: name || `AnyTLS-${server}`, 
-            type: 'anytls', 
-            server, 
-            port: safePort, 
-            password 
+        const proxy = {
+            name: name || `AnyTLS-${server}`,
+            type: 'anytls',
+            server,
+            port: safePort,
+            password,
         };
-        
+
         const sni = params.get('sni') || params.get('peer');
         if (sni) {
             proxy.servername = sni;
             proxy.sni = sni;
         }
-        
+
         if (params.get('alpn')) proxy.alpn = params.get('alpn').split(',');
-        if (params.get('insecure') === '1' || params.get('allowInsecure') === '1') proxy['skip-cert-verify'] = true;
-        const pinnedPeerCertSha256 = params.get('pinnedPeerCertSha256')
-            || params.get('pinned-peer-cert-sha256')
-            || params.get('peer-cert-sha256')
-            || params.get('certSha256');
+        if (params.get('insecure') === '1' || params.get('allowInsecure') === '1')
+            proxy['skip-cert-verify'] = true;
+        const pinnedPeerCertSha256 =
+            params.get('pinnedPeerCertSha256') ||
+            params.get('pinned-peer-cert-sha256') ||
+            params.get('peer-cert-sha256') ||
+            params.get('certSha256');
         if (pinnedPeerCertSha256) proxy.pinnedPeerCertSha256 = pinnedPeerCertSha256;
 
         proxy.udp = true;
@@ -1244,7 +1250,7 @@ function parseHttpsUrl(url) {
             server,
             port,
             username,
-            password
+            password,
         };
 
         if (params.get('sni')) {
@@ -1304,7 +1310,10 @@ function parseSocks5Url(url) {
             username = decodeURIComponent(userInfo);
         }
 
-        const useTls = params.get('tls') === '1' || params.get('tls') === 'true' || params.get('secure') === '1';
+        const useTls =
+            params.get('tls') === '1' ||
+            params.get('tls') === 'true' ||
+            params.get('secure') === '1';
         const proxy = {
             name: name || `SOCKS5-${server}`,
             type: useTls ? 'socks5-tls' : 'socks5',
@@ -1312,7 +1321,7 @@ function parseSocks5Url(url) {
             port,
             username,
             password,
-            udp: false
+            udp: false,
         };
 
         if (params.get('sni')) {
@@ -1334,7 +1343,6 @@ function parseSocks5Url(url) {
     }
 }
 
-
 /**
  * 将 SSR URL 转换为 Clash 代理对象
  * @param {string} url - SSR URL
@@ -1344,7 +1352,7 @@ function parseSsrUrl(url) {
     try {
         const b64 = url.substring(6);
         const decoded = base64Decode(b64);
-        
+
         // server:port:protocol:method:obfs:password_base64/?params
         const mainParts = decoded.split(':');
         if (mainParts.length < 6) return null;
@@ -1354,10 +1362,11 @@ function parseSsrUrl(url) {
         const protocol = mainParts[2];
         const cipher = mainParts[3];
         const obfs = mainParts[4];
-        
+
         const passwordPart = mainParts[5];
         const passwordEndIndex = passwordPart.indexOf('/');
-        const passwordBase64 = passwordEndIndex !== -1 ? passwordPart.substring(0, passwordEndIndex) : passwordPart;
+        const passwordBase64 =
+            passwordEndIndex !== -1 ? passwordPart.substring(0, passwordEndIndex) : passwordPart;
         const password = base64Decode(passwordBase64);
 
         const proxy = {
@@ -1369,15 +1378,17 @@ function parseSsrUrl(url) {
             cipher,
             obfs,
             password,
-            udp: true
+            udp: true,
         };
 
         if (passwordEndIndex !== -1) {
             const paramsStr = passwordPart.substring(passwordEndIndex + 2); // skip /?
             const params = new URLSearchParams(paramsStr);
-            
-            if (params.get('obfsparam')) proxy['obfs-param'] = base64Decode(params.get('obfsparam'));
-            if (params.get('protoparam')) proxy['protocol-param'] = base64Decode(params.get('protoparam'));
+
+            if (params.get('obfsparam'))
+                proxy['obfs-param'] = base64Decode(params.get('obfsparam'));
+            if (params.get('protoparam'))
+                proxy['protocol-param'] = base64Decode(params.get('protoparam'));
             if (params.get('remarks')) proxy.name = base64Decode(params.get('remarks'));
             if (params.get('group')) proxy.group = base64Decode(params.get('group'));
             if (params.get('udpport')) proxy.udpport = params.get('udpport');
@@ -1400,12 +1411,12 @@ function parseSsdUrl(url) {
         const b64 = url.substring(6);
         const decoded = base64Decode(b64);
         const config = JSON.parse(decoded);
-        
+
         // SSD 通常包含一个数组。这里为了简化，返回第一个有效的。
         // 实际上 SSD 应该被展开，但 builtin 流程目前是 1-to-1 映射。
         // 我们取第一个作为示范。
         if (!config.servers || !config.servers.length) return null;
-        
+
         const s = config.servers[0];
         const proxy = {
             name: s.remarks || `SSD-${s.server}`,
@@ -1415,9 +1426,9 @@ function parseSsdUrl(url) {
             cipher: config.encryption || s.encryption || 'aes-256-gcm',
             password: config.password || s.password,
             plugin: s.plugin,
-            'plugin-opts': s.plugin_options ? { host: s.plugin_options } : undefined
+            'plugin-opts': s.plugin_options ? { host: s.plugin_options } : undefined,
         };
-        
+
         return proxy;
     } catch (e) {
         console.error('解析 SSD URL 失败:', e);
@@ -1467,7 +1478,6 @@ export function urlToClashProxy(url) {
     return null;
 }
 
-
 /**
  * 批量将节点 URL 转换为 Clash 代理列表
  * @param {string[]} urls - 节点 URL 数组
@@ -1478,17 +1488,19 @@ export function urlsToClashProxies(urls, options = {}) {
     if (!Array.isArray(urls)) return [];
 
     return urls
-        .map(url => {
+        .map((url) => {
             const proxy = urlToClashProxy(url);
             if (!proxy) return null;
-            
+
             // [URL 参数覆盖] 补全对 TFO/UDP/SCV 的映射
             if (options.enableTfo !== undefined) proxy.tfo = options.enableTfo;
-            
+
             if (options.enableUdp !== undefined) {
                 const type = (proxy.type || '').toLowerCase();
-                const isNativeUdp = ['hysteria2', 'hy2', 'tuic', 'hysteria', 'wireguard'].includes(type);
-                
+                const isNativeUdp = ['hysteria2', 'hy2', 'tuic', 'hysteria', 'wireguard'].includes(
+                    type
+                );
+
                 if (options.enableUdp) {
                     proxy.udp = true;
                 } else if (!isNativeUdp) {
@@ -1497,21 +1509,27 @@ export function urlsToClashProxies(urls, options = {}) {
                     proxy.udp = true; // 原生 UDP 协议即便开关关闭也保持开启
                 }
             }
-            
+
             if (options.skipCertVerify) proxy['skip-cert-verify'] = true;
 
             // [智能增强] 注入元数据
             proxy.metadata = extractNodeMetadata(proxy.name);
-            
+
             // [自动补全] 仅在名称中完全没有国旗/地球 Emoji 时才尝试补全，避免重复添加或干扰用户重命名
             const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
-            if (options.addFlagEmoji !== false && proxy.metadata.flag && !HAS_EMOJI_REGEX.test(proxy.name)) {
+            if (
+                options.addFlagEmoji !== false &&
+                proxy.metadata.flag &&
+                !HAS_EMOJI_REGEX.test(proxy.name)
+            ) {
                 proxy.name = `${proxy.metadata.flag} ${proxy.name}`;
             }
-            
+
             return proxy;
         })
-        .filter(proxy => proxy !== null && (isVirtualInfoProxy(proxy) || !isLocalProxyEndpoint(proxy)));
+        .filter(
+            (proxy) => proxy !== null && (isVirtualInfoProxy(proxy) || !isLocalProxyEndpoint(proxy))
+        );
 }
 
 /**

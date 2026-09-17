@@ -24,7 +24,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             plusAsSpace: false,
             excludeTraffic: false,
             website: '',
-            notes: ''
+            notes: '',
         };
         showModal.value = true;
     };
@@ -42,7 +42,10 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
         try {
             editingSubscription.value = JSON.parse(JSON.stringify(sub));
             if (isDev) {
-                console.debug('UseSubscriptionForms: editingSubscription set to', editingSubscription.value);
+                console.debug(
+                    'UseSubscriptionForms: editingSubscription set to',
+                    editingSubscription.value
+                );
             }
             showModal.value = true;
         } catch (e) {
@@ -74,6 +77,6 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
         editingSubscription,
         openAdd,
         openEdit,
-        handleSave
+        handleSave,
     };
 }

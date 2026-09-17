@@ -10,17 +10,17 @@ function normalizeExternalApiConfig(value) {
     const externalApi = value && typeof value === 'object' ? value : {};
     const tokens = Array.isArray(externalApi.tokens)
         ? externalApi.tokens
-            .map((item, index) => ({
-                name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
-                token: String(item?.token || '').trim()
-            }))
-            .filter((item) => item.token || item.name)
+              .map((item, index) => ({
+                  name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
+                  token: String(item?.token || '').trim(),
+              }))
+              .filter((item) => item.token || item.name)
         : [];
 
     return {
         ...defaults,
         ...externalApi,
-        tokens: tokens.length > 0 ? tokens : defaults.tokens.map((item) => ({ ...item }))
+        tokens: tokens.length > 0 ? tokens : defaults.tokens.map((item) => ({ ...item })),
     };
 }
 
@@ -50,13 +50,19 @@ export function useSettingsLogic() {
     const disguiseConfig = ref({
         enabled: false,
         pageType: 'default',
-        redirectUrl: ''
+        redirectUrl: '',
     });
-
 
     // ========== 计算属性 ==========
     const hasWhitespace = computed(() => {
-        const fieldsCheck = ['FileName', 'mytoken', 'profileToken', 'transformConfig', 'BotToken', 'ChatID'];
+        const fieldsCheck = [
+            'FileName',
+            'mytoken',
+            'profileToken',
+            'transformConfig',
+            'BotToken',
+            'ChatID',
+        ];
         for (const key of fieldsCheck) {
             if (settings.value[key] && /\s/.test(settings.value[key])) return true;
         }
@@ -82,7 +88,7 @@ export function useSettingsLogic() {
                     disguiseConfig.value = {
                         enabled: settings.value.disguise.enabled ?? false,
                         pageType: settings.value.disguise.pageType ?? 'default',
-                        redirectUrl: settings.value.disguise.redirectUrl ?? ''
+                        redirectUrl: settings.value.disguise.redirectUrl ?? '',
                     };
                 }
 
@@ -127,10 +133,11 @@ export function useSettingsLogic() {
             const settingsToSave = {
                 ...settings.value,
                 externalApi: normalizeExternalApiConfig(settings.value.externalApi),
-                disguise: disguiseConfig.value
+                disguise: disguiseConfig.value,
             };
 
-            settingsToSave.ruleLevel = settingsToSave.ruleLevel || settingsToSave.clashRuleLevel || 'std';
+            settingsToSave.ruleLevel =
+                settingsToSave.ruleLevel || settingsToSave.clashRuleLevel || 'std';
 
             delete settingsToSave.prefixConfig;
             delete settingsToSave.prependSubName;
@@ -169,7 +176,7 @@ export function useSettingsLogic() {
         if (!confirm(t('settings.resetConfirm'))) {
             return;
         }
-        
+
         if (!confirm(t('settings.resetConfirmAgain'))) {
             return;
         }

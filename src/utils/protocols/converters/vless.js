@@ -90,7 +90,8 @@ export function convertVlessToUrl(proxy) {
                     if (proxy['xhttp-opts'].path) {
                         params.set('path', proxy['xhttp-opts'].path);
                     }
-                    const xhttpHost = proxy['xhttp-opts'].host || proxy['xhttp-opts']['headers']?.Host;
+                    const xhttpHost =
+                        proxy['xhttp-opts'].host || proxy['xhttp-opts']['headers']?.Host;
                     if (xhttpHost) {
                         params.set('host', xhttpHost);
                     }

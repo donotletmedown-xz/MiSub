@@ -14,11 +14,21 @@ describe('Transform config settings', () => {
     });
 
     it('allows empty transformConfig but rejects invalid external URLs', () => {
-        const emptyResult = validateProfile({ name: 'Demo', customId: 'demo', transformConfig: '' });
-        const invalidResult = validateProfile({ name: 'Demo', customId: 'demo', transformConfig: 'not-a-url' });
+        const emptyResult = validateProfile({
+            name: 'Demo',
+            customId: 'demo',
+            transformConfig: '',
+        });
+        const invalidResult = validateProfile({
+            name: 'Demo',
+            customId: 'demo',
+            transformConfig: 'not-a-url',
+        });
 
         expect(emptyResult.isValid).toBe(true);
         expect(invalidResult.isValid).toBe(false);
-        expect(invalidResult.errors.transformConfig).toContain('请输入有效的外部规则模板URL，或留空使用内置模板');
+        expect(invalidResult.errors.transformConfig).toContain(
+            '请输入有效的外部规则模板URL，或留空使用内置模板'
+        );
     });
 });

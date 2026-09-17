@@ -52,7 +52,7 @@ function handleApiError(error, context = '') {
         success: false,
         error: errorMessage,
         errorType: errorType,
-        status
+        status,
     };
 }
 
@@ -78,7 +78,7 @@ function normalizeApiFailure(data, fallbackMessage = t('settings.operationFailed
         error,
         errorType: data?.errorType || (status ? 'server' : 'unknown'),
         status,
-        data
+        data,
     };
 }
 export async function fetchInitialData() {
@@ -109,7 +109,7 @@ export async function login(password) {
             return {
                 success: false,
                 error: error.data?.message || error.data?.error || t('settings.loginFailed'),
-                errorType: 'auth'
+                errorType: 'auth',
             };
         }
         return handleApiError(error, 'login');
@@ -121,7 +121,11 @@ export async function saveMisubs(misubs, profiles) {
     try {
         // 数据预验证
         if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
-            return { success: false, error: t('settings.dataFormatInvalid'), errorType: 'validation' };
+            return {
+                success: false,
+                error: t('settings.dataFormatInvalid'),
+                errorType: 'validation',
+            };
         }
 
         return await api.post('/api/misubs', { misubs, profiles });
@@ -197,7 +201,6 @@ export async function resetSettings() {
     }
 }
 
-
 /**
  * 批量更新订阅的节点信息
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
@@ -208,7 +211,11 @@ export async function batchUpdateNodes(subscriptionIds) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒超时
 
-        const result = await api.post('/api/batch_update_nodes', { subscriptionIds }, { signal: controller.signal });
+        const result = await api.post(
+            '/api/batch_update_nodes',
+            { subscriptionIds },
+            { signal: controller.signal }
+        );
         clearTimeout(timeoutId);
 
         if (result?.success === false) {
@@ -234,7 +241,7 @@ export async function migrateToD1() {
                 success: false,
                 error: error.message,
                 errorType: 'server',
-                details: error.data?.details || error.data?.errors
+                details: error.data?.details || error.data?.errors,
             };
         }
         return handleApiError(error, 'migrateToD1');
@@ -258,7 +265,7 @@ export async function migrateLegacyD1() {
                 success: false,
                 error: error.message,
                 errorType: 'server',
-                details: error.data?.details || error.data?.errors
+                details: error.data?.details || error.data?.errors,
             };
         }
         return handleApiError(error, 'migrateLegacyD1');
@@ -277,7 +284,11 @@ export async function testSubconverterBackend(backend, target = 'clash') {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
-        const data = await api.post('/api/subconverter/test', { backend, target }, { signal: controller.signal });
+        const data = await api.post(
+            '/api/subconverter/test',
+            { backend, target },
+            { signal: controller.signal }
+        );
         clearTimeout(timeoutId);
         return data;
     } catch (error) {

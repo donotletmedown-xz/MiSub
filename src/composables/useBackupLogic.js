@@ -35,8 +35,15 @@ export function useBackupLogic() {
             if (!result?.success || !result.exportData) {
                 throw new Error(result?.message || t('backup.exportFailed'));
             }
-            const timestamp = new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
-            downloadJson(result.exportData, `misub-backup-${result.exportData.scope || scope}-${timestamp}.json`);
+            const timestamp = new Date()
+                .toISOString()
+                .slice(0, 19)
+                .replace('T', '_')
+                .replace(/:/g, '-');
+            downloadJson(
+                result.exportData,
+                `misub-backup-${result.exportData.scope || scope}-${timestamp}.json`
+            );
             showToast(t('backup.exportSuccess'), 'success');
         } catch (error) {
             console.error('Backup export failed:', error);
@@ -61,7 +68,10 @@ export function useBackupLogic() {
                 try {
                     const data = JSON.parse(e.target.result);
                     const scope = data?.scope || 'dataOnly';
-                    const scopeLabel = scope === 'dataAndSettings' ? t('backup.scopeDataAndSettings') : t('backup.scopeDataOnly');
+                    const scopeLabel =
+                        scope === 'dataAndSettings'
+                            ? t('backup.scopeDataAndSettings')
+                            : t('backup.scopeDataOnly');
                     const message = t('backup.restoreConfirm', { scope: scopeLabel });
                     if (!confirm(message)) return;
 
@@ -72,7 +82,10 @@ export function useBackupLogic() {
                     showToast(t('backup.restoreSuccess'), 'success');
                     setTimeout(() => window.location.reload(), 800);
                 } catch (err) {
-                    showToast(t('backup.importFailedWithMessage', { message: err.message }), 'error');
+                    showToast(
+                        t('backup.importFailedWithMessage', { message: err.message }),
+                        'error'
+                    );
                 }
             };
             reader.readAsText(file);

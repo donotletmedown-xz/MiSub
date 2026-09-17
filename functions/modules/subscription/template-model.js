@@ -4,7 +4,7 @@ export function createUnifiedTemplateModel(input = {}) {
             name: input.meta?.name || 'MiSub',
             source: input.meta?.source || 'builtin',
             target: input.meta?.target || 'clash',
-            ruleLevel: input.meta?.ruleLevel || 'std'
+            ruleLevel: input.meta?.ruleLevel || 'std',
         },
         proxies: Array.isArray(input.proxies) ? input.proxies : [],
         groups: Array.isArray(input.groups) ? input.groups : [],
@@ -15,9 +15,9 @@ export function createUnifiedTemplateModel(input = {}) {
             skipCertVerify: Boolean(input.settings?.skipCertVerify),
             enableUdp: Boolean(input.settings?.enableUdp),
             customDnsOverride: input.settings?.customDnsOverride || '',
-            dnsMode: input.settings?.dnsMode || 'clean'
+            dnsMode: input.settings?.dnsMode || 'clean',
         },
-        extras: typeof input.extras === 'object' && input.extras !== null ? input.extras : {}
+        extras: typeof input.extras === 'object' && input.extras !== null ? input.extras : {},
     };
 }
 

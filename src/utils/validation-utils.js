@@ -31,7 +31,7 @@ export function isValidNodeUrl(nodeUrl) {
     if (!nodeUrl || typeof nodeUrl !== 'string') return false;
 
     // 检查是否为支持的协议
-    return NODE_PROTOCOL_PREFIXES.some(protocol => nodeUrl.startsWith(protocol));
+    return NODE_PROTOCOL_PREFIXES.some((protocol) => nodeUrl.startsWith(protocol));
 }
 
 /**
@@ -53,7 +53,11 @@ export function isValidEmail(email) {
  */
 export function validatePasswordStrength(password) {
     if (!password) {
-        return { score: 0, message: t('validation.passwordRequired'), suggestions: [t('validation.enterPassword')] };
+        return {
+            score: 0,
+            message: t('validation.passwordRequired'),
+            suggestions: [t('validation.enterPassword')],
+        };
     }
 
     let score = 0;
@@ -175,7 +179,7 @@ export function validateForm(formData, rules) {
 
     return {
         isValid: Object.keys(errors).length === 0,
-        errors
+        errors,
     };
 }
 
@@ -189,12 +193,12 @@ export function validateSubscription(subscription) {
         name: {
             required: '订阅名称不能为空',
             minLength: 1,
-            maxLength: 100
+            maxLength: 100,
         },
         url: {
             required: '订阅URL不能为空',
-            type: 'url'
-        }
+            type: 'url',
+        },
     };
 
     return validateForm(subscription, rules);
@@ -210,15 +214,15 @@ export function validateProfile(profile) {
         name: {
             required: '配置名称不能为空',
             minLength: 1,
-            maxLength: 100
+            maxLength: 100,
         },
         customId: {
-            maxLength: 50
+            maxLength: 50,
         },
         transformConfig: {
             validator: (value) => {
                 if (!value) return null;
-                
+
                 // 允许 builtin: 和 custom: 前缀（内置/自定义模板）
                 if (value.startsWith('builtin:')) {
                     const templateName = value.slice(8).trim();
@@ -227,7 +231,7 @@ export function validateProfile(profile) {
                     }
                     return null;
                 }
-                
+
                 if (value.startsWith('custom:')) {
                     const templateName = value.slice(7).trim();
                     if (!templateName) {
@@ -235,14 +239,14 @@ export function validateProfile(profile) {
                     }
                     return null;
                 }
-                
+
                 // 其他情况必须是有效的 URL
                 if (!isValidUrl(value)) {
                     return '请输入有效的外部规则模板URL，或留空使用内置模板';
                 }
                 return null;
-            }
-        }
+            },
+        },
     };
 
     return validateForm(profile, rules);

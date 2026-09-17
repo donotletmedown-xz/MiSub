@@ -15,7 +15,7 @@ function buildSsrUrl(name = '台湾 1') {
         password: 'password',
         'obfs-param': 'microsoft.com',
         'protocol-param': 'user:pass',
-        udp: true
+        udp: true,
     });
 }
 
@@ -53,10 +53,10 @@ describe('node-utils', () => {
     it('urlsToClashProxies 应过滤本机回环出口', () => {
         const proxies = urlsToClashProxies([
             'trojan://fake@127.0.0.1:443#伪节点',
-            'trojan://real@example.com:443#真实节点'
+            'trojan://real@example.com:443#真实节点',
         ]);
 
-        expect(proxies.map(proxy => proxy.server)).toEqual(['example.com']);
+        expect(proxies.map((proxy) => proxy.server)).toEqual(['example.com']);
     });
 
     it('TUIC 节点密码包含 URL 保留字符时应保持可回环解析', () => {
@@ -71,7 +71,7 @@ describe('node-utils', () => {
             alpn: ['h3'],
             'skip-cert-verify': true,
             'congestion-controller': 'bbr',
-            'udp-relay-mode': 'native'
+            'udp-relay-mode': 'native',
         };
 
         const url = convertClashProxyToUrl(proxy);
@@ -87,7 +87,7 @@ describe('node-utils', () => {
             password: proxy.password,
             sni: proxy.sni,
             'congestion-controller': 'bbr',
-            'udp-relay-mode': 'native'
+            'udp-relay-mode': 'native',
         });
         expect(proxies[0].alpn).toEqual(['h3']);
     });
@@ -105,8 +105,8 @@ describe('node-utils', () => {
             plugin: 'obfs',
             'plugin-opts': {
                 mode: 'tls',
-                host: 'abcd.apple.com:215275'
-            }
+                host: 'abcd.apple.com:215275',
+            },
         };
 
         const url = convertClashProxyToUrl(proxy);
@@ -125,8 +125,8 @@ describe('node-utils', () => {
             plugin: 'obfs',
             'plugin-opts': {
                 mode: 'tls',
-                host: 'abcd.apple.com:215275'
-            }
+                host: 'abcd.apple.com:215275',
+            },
         });
     });
 
@@ -142,8 +142,8 @@ describe('node-utils', () => {
             'xhttp-opts': {
                 path: '/argo',
                 host: 'example.org',
-                mode: 'packet-up'
-            }
+                mode: 'packet-up',
+            },
         };
 
         const url = convertClashProxyToUrl(proxy);
@@ -157,7 +157,7 @@ describe('node-utils', () => {
         expect(proxies[0]['xhttp-opts']).toMatchObject({
             path: '/argo',
             host: 'example.org',
-            mode: 'packet-up'
+            mode: 'packet-up',
         });
     });
 });

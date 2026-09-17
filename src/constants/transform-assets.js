@@ -8,9 +8,17 @@ export const TRANSFORM_ASSETS = {
             is_default: true,
             sourceType: 'builtin-preset',
             recommendedFor: ['clash', 'singbox', 'surge', 'loon', 'quanx'],
-            compatibleClients: ['clash', 'mihomo', 'clash-meta', 'singbox', 'surge', 'loon', 'quanx'],
+            compatibleClients: [
+                'clash',
+                'mihomo',
+                'clash-meta',
+                'singbox',
+                'surge',
+                'loon',
+                'quanx',
+            ],
             strategy: 'model-driven',
-            description: 'MiSub 自带的默认极简模板，适合日常通用、新手用户和优先稳定的场景。'
+            description: 'MiSub 自带的默认极简模板，适合日常通用、新手用户和优先稳定的场景。',
         },
         {
             id: 1,
@@ -20,9 +28,17 @@ export const TRANSFORM_ASSETS = {
             is_default: false,
             sourceType: 'builtin-preset',
             recommendedFor: ['clash', 'singbox', 'surge', 'loon', 'quanx'],
-            compatibleClients: ['clash', 'mihomo', 'clash-meta', 'singbox', 'surge', 'loon', 'quanx'],
+            compatibleClients: [
+                'clash',
+                'mihomo',
+                'clash-meta',
+                'singbox',
+                'surge',
+                'loon',
+                'quanx',
+            ],
             strategy: 'model-driven',
-            description: '内置精简 ACL4SSR 分流模板，适合习惯 ACL4SSR 规则且希望保持轻量的用户。'
+            description: '内置精简 ACL4SSR 分流模板，适合习惯 ACL4SSR 规则且希望保持轻量的用户。',
         },
         {
             id: 2,
@@ -32,9 +48,17 @@ export const TRANSFORM_ASSETS = {
             is_default: false,
             sourceType: 'builtin-preset',
             recommendedFor: ['clash', 'singbox', 'surge', 'loon', 'quanx'],
-            compatibleClients: ['clash', 'mihomo', 'clash-meta', 'singbox', 'surge', 'loon', 'quanx'],
+            compatibleClients: [
+                'clash',
+                'mihomo',
+                'clash-meta',
+                'singbox',
+                'surge',
+                'loon',
+                'quanx',
+            ],
             strategy: 'model-driven',
-            description: '面向流媒体和 AI 服务使用场景的内置模板，保留核心分流和地区候选链。'
+            description: '面向流媒体和 AI 服务使用场景的内置模板，保留核心分流和地区候选链。',
         },
         {
             id: 3,
@@ -46,7 +70,8 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash', 'singbox'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta', 'singbox'],
             strategy: 'model-driven',
-            description: '内置完整 ACL4SSR 分流模板，可通过统一模板模型生成 Clash 与 Sing-Box 配置。'
+            description:
+                '内置完整 ACL4SSR 分流模板，可通过统一模板模型生成 Clash 与 Sing-Box 配置。',
         },
         {
             id: 101,
@@ -58,7 +83,7 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: '经典 ACL4SSR 规则，适合 Clash 系列客户端。'
+            description: '经典 ACL4SSR 规则，适合 Clash 系列客户端。',
         },
         {
             id: 102,
@@ -70,7 +95,7 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: '适合需要多地区自动分组和负载均衡的 Clash 用户。'
+            description: '适合需要多地区自动分组和负载均衡的 Clash 用户。',
         },
         {
             id: 103,
@@ -82,7 +107,7 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: 'Cloudflare Worker 节点场景专用的 Clash 预设。'
+            description: 'Cloudflare Worker 节点场景专用的 Clash 预设。',
         },
         {
             id: 104,
@@ -94,7 +119,7 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: '规则更完整，分组更细，适合作为 Clash 进阶预设。'
+            description: '规则更完整，分组更细，适合作为 Clash 进阶预设。',
         },
         {
             id: 105,
@@ -106,7 +131,7 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: '面向 Worker/CDN 线路的完整 Clash 预设。'
+            description: '面向 Worker/CDN 线路的完整 Clash 预设。',
         },
         {
             id: 106,
@@ -118,7 +143,7 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: '适合需要完整规则和多模式分组的 Clash 用户。'
+            description: '适合需要完整规则和多模式分组的 Clash 用户。',
         },
         {
             id: 107,
@@ -130,13 +155,13 @@ export const TRANSFORM_ASSETS = {
             recommendedFor: ['clash'],
             compatibleClients: ['clash', 'mihomo', 'clash-meta'],
             strategy: 'external-first',
-            description: '完整多模式的 Worker/CDN Clash 预设。'
-        }
-    ]
+            description: '完整多模式的 Worker/CDN Clash 预设。',
+        },
+    ],
 };
 
 export function getTransformAssetByUrl(url) {
-    return TRANSFORM_ASSETS.configs.find(item => item.url === url) || null;
+    return TRANSFORM_ASSETS.configs.find((item) => item.url === url) || null;
 }
 
 export function isBuiltinTransformAssetUrl(url) {

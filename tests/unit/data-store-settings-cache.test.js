@@ -6,7 +6,7 @@ import { useSettingsStore } from '../../src/stores/settings.js';
 function jsonResponse(body, status = 200) {
     return new Response(JSON.stringify(body), {
         status,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
     });
 }
 
@@ -35,21 +35,24 @@ describe('Data store settings cache', () => {
             config: {
                 siteName: 'old site',
                 enablePublicPage: false,
-                transformConfig: 'https://example.com/old.ini'
-            }
+                transformConfig: 'https://example.com/old.ini',
+            },
         };
         const nextSettings = {
             siteName: 'new site',
             enablePublicPage: true,
-            transformConfig: 'https://example.com/new.ini'
+            transformConfig: 'https://example.com/new.ini',
         };
 
-        vi.stubGlobal('fetch', vi.fn(async (url) => {
-            if (url === '/api/settings') {
-                return jsonResponse({ success: true });
-            }
-            throw new Error(`Unexpected request: ${url}`);
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url) => {
+                if (url === '/api/settings') {
+                    return jsonResponse({ success: true });
+                }
+                throw new Error(`Unexpected request: ${url}`);
+            })
+        );
 
         const dataStore = createStore();
         expect(dataStore.hydrateFromData(initialData)).toBe(true);

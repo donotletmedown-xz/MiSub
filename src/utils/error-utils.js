@@ -19,7 +19,7 @@ export function createApiError(error, context = 'Unknown') {
         message: error.message || '未知错误',
         error: error.name || 'Error',
         context,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
     };
 }
 

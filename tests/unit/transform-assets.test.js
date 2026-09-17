@@ -29,7 +29,9 @@ describe('Transform assets', () => {
     });
 
     it('should expose only builtin presets that exist in the backend registry', () => {
-        const builtinAssets = TRANSFORM_ASSETS.configs.filter(asset => asset.sourceType === 'builtin-preset');
+        const builtinAssets = TRANSFORM_ASSETS.configs.filter(
+            (asset) => asset.sourceType === 'builtin-preset'
+        );
         expect(builtinAssets.length).toBeGreaterThan(0);
 
         for (const asset of builtinAssets) {
@@ -38,7 +40,10 @@ describe('Transform assets', () => {
 
             const templateId = asset.url.slice('builtin:'.length);
             const backendTemplate = getBuiltinTemplate(templateId);
-            expect(backendTemplate, `${asset.url} should resolve to a backend builtin template`).not.toBeNull();
+            expect(
+                backendTemplate,
+                `${asset.url} should resolve to a backend builtin template`
+            ).not.toBeNull();
             expect(backendTemplate?.id).toBe(templateId);
             expect(backendTemplate?.format).toBe('ini');
         }

@@ -11,46 +11,46 @@ const HomeView = () => import('../views/HomeView.vue'); // [NEW] Wrapper View
 
 const routes = [
     {
-        path: '/',  // Root path is HomeView (Smart Wrapper)
+        path: '/', // Root path is HomeView (Smart Wrapper)
         name: 'Home',
         component: HomeView,
-        meta: { title: '首页', isPublic: true } // Publicly accessible, view handles content
+        meta: { title: '首页', isPublic: true }, // Publicly accessible, view handles content
     },
     {
         path: '/explore',
         name: 'Explore',
         component: HomeView,
-        meta: { title: '公开页', isPublic: true }
+        meta: { title: '公开页', isPublic: true },
     },
     {
         path: '/dashboard',
         name: 'Dashboard',
         component: DashboardView,
-        meta: { title: '仪表盘' }
+        meta: { title: '仪表盘' },
     },
     {
         path: '/dashboard/groups',
         name: 'SubscriptionGroups',
         component: SubscriptionGroupsView,
-        meta: { title: '订阅组' }
+        meta: { title: '订阅组' },
     },
     {
         path: '/dashboard/nodes',
         name: 'ManualNodes',
         component: ManualNodesView,
-        meta: { title: '手动节点' }
+        meta: { title: '手动节点' },
     },
     {
         path: '/dashboard/subscriptions',
         name: 'MySubscriptions',
         component: MySubscriptionsView,
-        meta: { title: '我的订阅' }
+        meta: { title: '我的订阅' },
     },
     {
         path: '/dashboard/settings',
         name: 'Settings',
         component: SettingsView,
-        meta: { title: '设置' }
+        meta: { title: '设置' },
     },
     /* 
     // [REMOVED] Static /login route. 
@@ -67,8 +67,8 @@ const routes = [
         path: '/:pathMatch(.*)*',
         name: 'Entrance',
         component: () => import('../views/Entrance.vue'),
-        meta: { title: 'MiSub', isPublic: true } // Public, so Entrance.vue can decide what to render
-    }
+        meta: { title: 'MiSub', isPublic: true }, // Public, so Entrance.vue can decide what to render
+    },
 ];
 
 const router = createRouter({
@@ -80,14 +80,16 @@ const router = createRouter({
         } else {
             return { top: 0 };
         }
-    }
+    },
 });
 
 // 自动恢复动态 chunk 加载失败导致的白屏
 router.onError((error) => {
     const message = error?.message || '';
-    if (message.includes('Failed to fetch dynamically imported module')
-        || message.includes('error loading dynamically imported module')) {
+    if (
+        message.includes('Failed to fetch dynamically imported module') ||
+        message.includes('error loading dynamically imported module')
+    ) {
         const reloadKey = 'misub:chunk-reload';
         if (sessionStorage.getItem(reloadKey) !== '1') {
             sessionStorage.setItem(reloadKey, '1');
@@ -119,7 +121,7 @@ router.beforeEach(async (to, from, next) => {
     // Let's keep it simple: if the session check fails (which happens in App.vue or main.js), it redirects.
     // But to prevent "flash of content", we can add a simple check if we are SURE we aren't logged in.
 
-    // For now, let's stick to the title update as the primary router responsibility, 
+    // For now, let's stick to the title update as the primary router responsibility,
     // and rely on the Backend Redirect (implemented in Step 1) and API 401 handling for security.
     // The backend redirect covers the "refresh/direct link" case.
     // The API 401 covers the "token expired while using" case.
