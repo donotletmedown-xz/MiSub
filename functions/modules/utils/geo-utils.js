@@ -530,6 +530,32 @@ function parseHostPort(value) {
     return { server: segment, port: '' };
 }
 
+const TRAFFIC_SIZE_REGEX = /\d+(?:\.\d+)?\s*(?:[kmgtpe]i?b)\b/gi;
+
+function stripTrafficSizeTokens(name) {
+    return String(name || '').replace(TRAFFIC_SIZE_REGEX, ' ');
+}
+
+function findIsolatedKeywordIndex(haystack, keyword) {
+    let from = 0;
+    while (from <= haystack.length) {
+        const idx = haystack.indexOf(keyword, from);
+        if (idx === -1) return -1;
+
+        const charBefore = idx > 0 ? haystack[idx - 1] : '';
+        const charAfter = haystack[idx + keyword.length] || '';
+        const isLetterBefore = Boolean(charBefore && /[a-z]/i.test(charBefore));
+        const isDigitOrDotBefore = Boolean(charBefore && /[0-9.]/.test(charBefore));
+        const isLetterAfter = Boolean(charAfter && /[a-z]/i.test(charAfter));
+
+        if (!isLetterBefore && !isLetterAfter && !isDigitOrDotBefore) {
+            return idx;
+        }
+        from = idx + keyword.length;
+    }
+    return -1;
+}
+
 /**
  * 从节点名称中识别地区
  * @param {string} nodeName - 节点名称
@@ -540,7 +566,8 @@ export function extractNodeRegion(nodeName) {
         return '其他';
     }
 
-    const normalizedNodeName = nodeName.toLowerCase();
+    // 先去掉 325.82GB / 1.2TiB 这类流量残留，避免把 GB 当成英国
+    const normalizedNodeName = stripTrafficSizeTokens(nodeName).toLowerCase();
 
     // 遍历所有地区关键词
     for (const [regionName, keywords] of Object.entries(REGION_KEYWORDS)) {
@@ -548,29 +575,13 @@ export function extractNodeRegion(nodeName) {
             const lowerKeyword = keyword.toLowerCase();
 
             // 对于短关键词（2-3个字符的纯英文），要求匹配独立单词边界
-            // 避免 "kristi" 匹配 "kr"，"user" 匹配 "us" 等误匹配
+            // 避免 "kristi" 匹配 "kr"，"user" 匹配 "us"，以及 "12GB" 匹配 "GB"
             if (lowerKeyword.length <= 3 && /^[a-z]+$/i.test(lowerKeyword)) {
-                // 使用更兼容的方式检查单词边界（不使用 lookbehind）
-                const idx = normalizedNodeName.indexOf(lowerKeyword);
-                if (idx !== -1) {
-                    // 检查前一个字符
-                    const charBefore = idx > 0 ? normalizedNodeName[idx - 1] : '';
-                    const isLetterBefore = charBefore && /[a-z]/i.test(charBefore);
-
-                    // 检查后一个字符
-                    const charAfter = normalizedNodeName[idx + lowerKeyword.length] || '';
-                    const isLetterAfter = charAfter && /[a-z]/i.test(charAfter);
-
-                    // 只有当前后都不是字母时才匹配
-                    if (!isLetterBefore && !isLetterAfter) {
-                        return regionName;
-                    }
-                }
-            } else {
-                // 对于长关键词或中文，直接使用 includes
-                if (normalizedNodeName.includes(lowerKeyword)) {
+                if (findIsolatedKeywordIndex(normalizedNodeName, lowerKeyword) !== -1) {
                     return regionName;
                 }
+            } else if (normalizedNodeName.includes(lowerKeyword)) {
+                return regionName;
             }
         }
     }

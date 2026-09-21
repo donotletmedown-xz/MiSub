@@ -158,6 +158,60 @@ proxies:
         expect(proxy.flow).toBe('xtls-rprx-vision');
     });
 
+    it('does not rewrite traffic leftovers as UK when merging a custom INI template', () => {
+        const clashYaml = `
+proxies:
+- client-fingerprint: chrome
+  flow: xtls-rprx-vision
+  name: vless-reality-rspeschywk|📊325.82GB
+  network: tcp
+  port: 443
+  reality-opts:
+    public-key: public-key-value
+    short-id: 6d1f4f
+    support-x25519mlkem768: true
+  server: vless.example.com
+  servername: www.cloudflare.com
+  tls: true
+  type: vless
+  udp: true
+  uuid: 22222222-2222-4222-8222-222222222222
+proxy-groups:
+- name: PROXY
+  proxies:
+  - vless-reality-rspeschywk|📊325.82GB
+  - DIRECT
+  type: select
+rules:
+- MATCH,PROXY
+`;
+        const userTemplate = [
+            '[custom]',
+            'ruleset=🎯 全球直连,[]GEOIP,PRIVATE',
+            'ruleset=☑️ 手动选择,[]FINAL',
+            'custom_proxy_group=☑️ 手动选择`select`[]🇭🇰 HK自动`[]🇺🇸 US自动`.*',
+            'custom_proxy_group=🇭🇰 HK自动`url-test`(🇭🇰|港|HK)`http://www.google.com/generate_204`300,,15',
+            'custom_proxy_group=🇺🇸 US自动`url-test`(🇺🇸|美|US)`http://www.google.com/generate_204`300,,15',
+            'custom_proxy_group=🎯 全球直连`select`[]DIRECT`[]☑️ 手动选择',
+        ].join('\n');
+        const nodes = extractValidNodes(clashYaml);
+        const output = renderClashFromIniTemplate(userTemplate, {
+            nodeList: nodes.join('\n'),
+            ruleLevel: 'none',
+            fileName: 'UserCustomMerge',
+        });
+        const parsed = yaml.load(output);
+        const proxy = parsed.proxies[0];
+
+        expect(proxy.name).toBe('vless-reality-rspeschywk|📊325.82GB');
+        expect(proxy.name).not.toContain('🇬🇧');
+        expect(output).not.toContain('metadata:');
+        expect(proxy).not.toHaveProperty('metadata');
+        expect(proxy['reality-opts']['support-x25519mlkem768']).toBe(true);
+        expect(proxy['reality-opts']['short-id']).toBe('6d1f4f');
+        expect(proxy.flow).toBe('xtls-rprx-vision');
+    });
+
     it('still retains AI policy and default safe DNS in standard builtin mode', () => {
         const output = generateBuiltinClashConfig(sampleNodeList, {
             ruleLevel: 'std',

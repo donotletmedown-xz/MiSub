@@ -1521,9 +1521,10 @@ export function urlsToClashProxies(urls, options = {}) {
 
             // [自动补全] 仅在名称中完全没有国旗/地球 Emoji 时才尝试补全，避免重复添加或干扰用户重命名
             const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
+            const COUNTRY_FLAG_REGEX = /[\u{1F1E6}-\u{1F1FF}]{2}/u;
             if (
                 options.addFlagEmoji !== false &&
-                proxy.metadata.flag &&
+                COUNTRY_FLAG_REGEX.test(proxy.metadata.flag || '') &&
                 !HAS_EMOJI_REGEX.test(proxy.name)
             ) {
                 proxy.name = `${proxy.metadata.flag} ${proxy.name}`;

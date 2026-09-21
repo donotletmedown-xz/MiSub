@@ -4,6 +4,8 @@ import {
     isClashYamlProfileTemplate,
     isIniTemplateSource,
 } from '../../functions/services/processor-service.js';
+import { KV_KEY_RULE_TEMPLATES } from '../../functions/modules/rule-template-handler.js';
+import yaml from 'js-yaml';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
 
@@ -214,5 +216,52 @@ rules:
         );
         expect(result.content).toContain('[general]');
         expect(result.content).toContain('[dns]');
+    });
+
+    it('does not inject AI groups or UK flags when rendering a stored custom INI template', async () => {
+        const customStorage = {
+            get: vi.fn(async (key) => {
+                if (key === KV_KEY_RULE_TEMPLATES) {
+                    return [
+                        {
+                            id: 'user-custom',
+                            name: '用户模板',
+                            enabled: true,
+                            content: [
+                                '[custom]',
+                                'ruleset=🎯 全球直连,[]GEOIP,PRIVATE',
+                                'ruleset=☑️ 手动选择,[]FINAL',
+                                'custom_proxy_group=☑️ 手动选择`select`.*',
+                                'custom_proxy_group=🎯 全球直连`select`[]DIRECT`[]☑️ 手动选择',
+                            ].join('\n'),
+                        },
+                    ];
+                }
+                return null;
+            }),
+            put: vi.fn(),
+        };
+
+        const result = await ProcessorService.renderOutput({
+            targetFormat: 'clash',
+            combinedNodeList:
+                'vless://22222222-2222-4222-8222-222222222222@vless.example.com:443?encryption=none&type=tcp&security=reality&pbk=public-key-value&sid=6d1f4f&x25519mlkem768=1&flow=xtls-rprx-vision&sni=www.cloudflare.com&fp=chrome#vless-reality-rspeschywk%7C%F0%9F%93%8A325.82GB',
+            subName: 'UserCustom',
+            config: { UpdateInterval: 86400 },
+            builtinOptions: { ruleLevel: 'std', enableUdp: true, skipCertVerify: false },
+            templateSource: { kind: 'custom', value: 'user-custom' },
+            managedConfigUrl: 'https://example.com/sub',
+            storageAdapter: customStorage,
+        });
+
+        const parsed = yaml.load(result.content);
+        const proxy = parsed.proxies[0];
+        const groupNames = (parsed['proxy-groups'] || []).map((group) => group.name);
+
+        expect(proxy.name).toBe('vless-reality-rspeschywk|📊325.82GB');
+        expect(result.content).not.toContain('metadata:');
+        expect(proxy['reality-opts']['support-x25519mlkem768']).toBe(true);
+        expect(groupNames).not.toEqual(expect.arrayContaining(['🤖 OpenAI', '🤖 Claude']));
+        expect(groupNames).toContain('☑️ 手动选择');
     });
 });

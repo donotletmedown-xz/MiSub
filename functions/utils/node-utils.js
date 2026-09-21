@@ -170,7 +170,7 @@ export function addFlagEmoji(link) {
         if (HAS_EMOJI_REGEX.test(name)) return name;
 
         const metadata = extractNodeMetadata(name);
-        if (!metadata.flag) return name;
+        if (!metadata.flag || !/[\u{1F1E6}-\u{1F1FF}]{2}/u.test(metadata.flag)) return name;
 
         return `${metadata.flag} ${name}`;
     };

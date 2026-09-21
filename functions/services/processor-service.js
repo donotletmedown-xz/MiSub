@@ -212,11 +212,14 @@ export class ProcessorService {
             );
 
             if (templateText && isIniTemplate) {
+                const isUserIniTemplate =
+                    templateSource.kind === 'custom' || templateSource.kind === 'remote';
                 const renderParams = {
                     nodeList: combinedNodeList,
                     fileName: subName,
                     targetFormat,
-                    ruleLevel: builtinOptions.ruleLevel,
+                    // 用户自定义/远程 INI 已经自带策略组与规则，不再套用内置 std 的 AI 分组
+                    ruleLevel: isUserIniTemplate ? 'none' : builtinOptions.ruleLevel,
                     interval: config.UpdateInterval || 86400,
                     managedConfigUrl,
                     skipCertVerify: builtinOptions.skipCertVerify,
@@ -224,6 +227,10 @@ export class ProcessorService {
                     isMeta: builtinOptions.isMeta,
                     customDnsOverride: builtinOptions.customDnsOverride || '',
                     dnsMode: builtinOptions.dnsMode || 'clean',
+                    // 用户模板使用已经定稿的节点名；内置模板仍按显式开关补国旗
+                    addFlagEmoji: isUserIniTemplate
+                        ? builtinOptions.addFlagEmoji === true
+                        : builtinOptions.addFlagEmoji !== false,
                 };
 
                 switch (targetFormat) {

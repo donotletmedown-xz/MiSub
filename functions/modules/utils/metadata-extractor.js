@@ -46,8 +46,8 @@ export function extractNodeMetadata(name) {
     // 使用已有的 geo-utils 识别地区
     const region = extractNodeRegion(name);
 
-    // 如果名称里没有国旗但识别出了地区，尝试根据地区补全国旗
-    const autoFlag = flag || getRegionEmoji(region);
+    // 只给识别出的真实地区补国旗；“其他”的地球 emoji 不应当作节点名前缀
+    const autoFlag = flag || (region && region !== '其他' ? getRegionEmoji(region) : '');
 
     // 3. 提取技术标签 (Tags)
     const tags = [];
