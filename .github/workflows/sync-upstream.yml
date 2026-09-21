@@ -1,10 +1,9 @@
 name: 自动同步上游 MiSub
 
 on:
-  schedule:
-    # 每天北京时间 08:00（UTC 00:00）检查一次
-    - cron: '0 0 * * *'
-  workflow_dispatch:  # 可在 Actions 页面手动触发
+  # 已关闭定时同步，避免上游 commit 覆盖 fork 上的本地修复。
+  # 需要跟上游时，到 Actions 页面手动运行此工作流。
+  workflow_dispatch:
 
 permissions:
   contents: write  # 允许 push 回 fork

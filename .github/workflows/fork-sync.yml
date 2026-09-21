@@ -1,8 +1,8 @@
 name: Fork Sync
 
 on:
-  schedule:
-    - cron: "0 22 * * *"     # 每天北京时间 06:00 执行
+  # 已关闭定时同步。此工作流会 hard reset 到上游 main，
+  # 你在 fork 上多出来的 commit 会被丢掉，因此只保留手动触发。
   workflow_dispatch:
 
 permissions:
