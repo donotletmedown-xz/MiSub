@@ -164,7 +164,7 @@ export function convertClashProxyToUrl(proxy) {
             const uuid = proxy.uuid || proxy.UUID;
             if (!uuid) return null;
             const params = ['encryption=none'];
-            if (proxy.network) params.push(`type=${proxy.network}`);
+            params.push(`type=${proxy.network || 'tcp'}`);
             const wsOpts = proxy.wsOpts || proxy['ws-opts'];
             if (wsOpts) {
                 if (wsOpts.path) params.push(`path=${encodeURIComponent(wsOpts.path)}`);

@@ -210,6 +210,9 @@ rules:
         expect(proxy['reality-opts']['support-x25519mlkem768']).toBe(true);
         expect(proxy['reality-opts']['short-id']).toBe('6d1f4f');
         expect(proxy.flow).toBe('xtls-rprx-vision');
+        expect(proxy.network).toBe('tcp');
+        expect(proxy.servername).toBe('www.cloudflare.com');
+        expect(proxy).not.toHaveProperty('sni');
     });
 
     it('still retains AI policy and default safe DNS in standard builtin mode', () => {

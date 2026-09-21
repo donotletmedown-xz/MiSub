@@ -162,7 +162,6 @@ describe('protocol conversion fixtures', () => {
                     network: 'grpc',
                     tls: true,
                     servername: 'www.example.com',
-                    sni: 'www.example.com',
                     flow: 'xtls-rprx-vision',
                     'client-fingerprint': 'chrome',
                     'dialer-proxy': '前置节点',
@@ -818,5 +817,8 @@ rules:
         expect(proxy['reality-opts']['public-key']).toBe('public-key-value');
         expect(proxy.flow).toBe('xtls-rprx-vision');
         expect(proxy.uuid).toBe('22222222-2222-4222-8222-222222222222');
+        expect(proxy.network).toBe('tcp');
+        expect(proxy.servername).toBe('www.cloudflare.com');
+        expect(proxy).not.toHaveProperty('sni');
     });
 });

@@ -138,11 +138,10 @@ function parseVlessUrl(url) {
             uuid,
         };
 
-        // 网络类型
+        // 网络类型。Clash Verge / Mihomo 的 VLESS Reality 原文会带 network: tcp，
+        // 往返时必须写回，不能因为是默认值就丢掉。
         const network = params.get('type') || 'tcp';
-        if (network !== 'tcp') {
-            proxy.network = network;
-        }
+        proxy.network = network;
 
         // WebSocket 配置
         if (network === 'ws') {
@@ -280,13 +279,11 @@ function parseVlessUrl(url) {
             proxy['skip-cert-verify'] = true;
         }
 
-        // SNI (支持 sni 和 peer 两种参数名，Shadowrocket 使用 peer)
+        // SNI。Clash 的 VLESS 使用 servername；再写一份 sni 会和原文不一致。
         if (params.get('sni')) {
             proxy.servername = params.get('sni');
-            proxy.sni = params.get('sni');
         } else if (params.get('peer')) {
             proxy.servername = params.get('peer');
-            proxy.sni = params.get('peer');
         }
 
         // Fingerprint
