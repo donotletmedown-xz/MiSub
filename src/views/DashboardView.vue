@@ -11,7 +11,16 @@
     import { useManualNodes } from '../composables/useManualNodes.js';
     import { formatBytes } from '../lib/utils.js';
     import StatCards from '../components/features/Dashboard/StatCards.vue';
-    import { getDashboardHealthItems, shouldShowFullGuide } from '../utils/dashboard-health.js';
+    import {
+        clearDismissedHealthItems,
+        dismissHealthItem,
+        readDismissedHealthItemIds,
+    } from '../utils/health-item-dismissal.js';
+    import {
+        getDashboardHealthItems,
+        resolveHealthItemCopy,
+        shouldShowFullGuide,
+    } from '../utils/dashboard-health.js';
     import { useI18n } from '../i18n/index.js';
 
     const { t } = useI18n();
@@ -64,16 +73,41 @@
         };
     });
 
-    const dashboardHealthItems = computed(() =>
+    // Items the user has ticked off. Mirrored into a ref so the list recomputes
+    // when the dismissal set changes (localStorage itself is not reactive).
+    const dismissedHealthItemIds = ref(readDismissedHealthItemIds());
+
+    const allHealthItems = computed(() =>
         getDashboardHealthItems({
             subscriptions: subscriptions.value || [],
             profiles: profiles.value || [],
             settings: settings.value || {},
             totalNodesCount: totalNodesCount.value,
-        })
+        }).map((item) => resolveHealthItemCopy(item, t))
+    );
+
+    const dashboardHealthItems = computed(() =>
+        allHealthItems.value.filter((item) => !dismissedHealthItemIds.value.includes(item.id))
+    );
+
+    const dismissedHealthItemsCount = computed(
+        () => allHealthItems.value.length - dashboardHealthItems.value.length
     );
 
     const hasHealthItems = computed(() => dashboardHealthItems.value.length > 0);
+
+    // How many health items to render before the "show more" toggle kicks in.
+    const HEALTH_ITEMS_COLLAPSED_COUNT = 4;
+    const showAllHealthItems = ref(false);
+    const visibleHealthItems = computed(() =>
+        showAllHealthItems.value
+            ? dashboardHealthItems.value
+            : dashboardHealthItems.value.slice(0, HEALTH_ITEMS_COLLAPSED_COUNT)
+    );
+    const hiddenHealthItemsCount = computed(() =>
+        Math.max(0, dashboardHealthItems.value.length - visibleHealthItems.value.length)
+    );
+
     const showFullGuide = computed(() =>
         shouldShowFullGuide({
             subscriptions: subscriptions.value || [],
@@ -109,16 +143,6 @@
         info: 'bg-sky-500',
     };
 
-    const handleHealthAction = (item) => {
-        if (item.action === 'openLog') {
-            showLogModal.value = true;
-            return;
-        }
-        if (item.actionRoute) {
-            router.push({ path: item.actionRoute, query: item.actionQuery || {} });
-        }
-    };
-
     const handleStatNavigate = (path, query = {}) => {
         router.push({ path, query });
     };
@@ -148,6 +172,40 @@
     // --- Log Modal Logic ---
     const showLogModal = ref(false);
     const LogModal = defineAsyncComponent(() => import('../components/modals/LogModal.vue'));
+
+    // Kept below the `showLogModal` declaration on purpose: this handler closes
+    // over it, so co-locating them keeps the dependency obvious and immune to a
+    // future refactor that might call it during setup.
+    //
+    // Only the PRIMARY button routes here. `item.action` is the *secondary*
+    // action key and must not be consulted: an item can carry both (e.g. the
+    // error card links to the filtered list AND offers "打开日志"), and reading
+    // `action` here used to short-circuit the primary navigation entirely.
+    const handleHealthAction = (item) => {
+        if (item.actionRoute) {
+            router.push({ path: item.actionRoute, query: item.actionQuery || {} });
+        }
+    };
+
+    // Secondary buttons dispatch the item's own action key instead of navigating.
+    const handleHealthSecondaryAction = (item) => {
+        if (item.action === 'openLog') {
+            showLogModal.value = true;
+        }
+    };
+
+    // --- Health item dismissal ---
+    // Hiding an item only records a local preference; the underlying issue is
+    // untouched, so it comes back if the user restores it.
+    const dismissHealthItemById = (id) => {
+        dismissHealthItem(id);
+        dismissedHealthItemIds.value = readDismissedHealthItemIds();
+    };
+
+    const restoreDismissedHealthItems = () => {
+        clearDismissedHealthItems();
+        dismissedHealthItemIds.value = readDismissedHealthItemIds();
+    };
 
     // --- QRCode Modal Logic ---
     const QRCodeModal = defineAsyncComponent(() => import('../components/modals/QRCodeModal.vue'));
@@ -290,7 +348,7 @@
 
                         <div v-if="hasHealthItems" class="grid gap-3">
                             <div
-                                v-for="item in dashboardHealthItems"
+                                v-for="item in visibleHealthItems"
                                 :key="item.id"
                                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[var(--misub-radius-md)] border p-3"
                                 :class="healthToneClasses[item.tone] || healthToneClasses.info"
@@ -322,14 +380,36 @@
                                         v-if="item.secondaryActionLabel"
                                         type="button"
                                         class="min-h-10 rounded-[var(--misub-radius-md)] border border-current/15 px-3 py-2 text-sm font-semibold opacity-80 hover:opacity-100 transition-opacity"
-                                        @click="
-                                            handleHealthAction({ action: item.secondaryAction })
-                                        "
+                                        @click="handleHealthSecondaryAction(item)"
                                     >
                                         {{ item.secondaryActionLabel }}
                                     </button>
+                                    <button
+                                        type="button"
+                                        class="min-h-10 rounded-[var(--misub-radius-md)] px-3 py-2 text-sm font-medium opacity-60 hover:opacity-100 transition-opacity"
+                                        :title="t('dashboard.health.dismissItem')"
+                                        :aria-label="t('dashboard.health.dismissItem')"
+                                        data-testid="health-item-dismiss"
+                                        @click="dismissHealthItemById(item.id)"
+                                    >
+                                        {{ t('dashboard.health.dismiss') }}
+                                    </button>
                                 </div>
                             </div>
+                            <button
+                                v-if="hiddenHealthItemsCount > 0 || showAllHealthItems"
+                                type="button"
+                                class="min-h-10 justify-self-start rounded-[var(--misub-radius-md)] border border-gray-200/80 bg-white/70 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 transition-colors"
+                                @click="showAllHealthItems = !showAllHealthItems"
+                            >
+                                {{
+                                    showAllHealthItems
+                                        ? t('dashboard.health.showLess')
+                                        : t('dashboard.health.showMore', {
+                                              count: hiddenHealthItemsCount,
+                                          })
+                                }}
+                            </button>
                         </div>
                         <div
                             v-else
@@ -340,6 +420,19 @@
                                 {{ t('dashboard.health.allGoodDesc') }}
                             </p>
                         </div>
+                        <button
+                            v-if="dismissedHealthItemsCount > 0"
+                            type="button"
+                            class="justify-self-start text-sm font-medium text-gray-500 underline decoration-dotted underline-offset-4 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                            data-testid="health-items-restore"
+                            @click="restoreDismissedHealthItems"
+                        >
+                            {{
+                                t('dashboard.health.restoreDismissed', {
+                                    count: dismissedHealthItemsCount,
+                                })
+                            }}
+                        </button>
                     </section>
 
                     <section

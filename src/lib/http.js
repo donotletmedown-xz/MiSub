@@ -12,6 +12,12 @@ export class APIError extends Error {
     }
 }
 
+let unauthorizedHandler = null;
+
+export function configureUnauthorizedHandler(handler) {
+    unauthorizedHandler = typeof handler === 'function' ? handler : null;
+}
+
 const buildHeaders = (headers, body) => {
     if (headers instanceof Headers) {
         return headers;
@@ -44,6 +50,13 @@ export async function request(url, options = {}) {
 
     const data = await parseJson(response);
     if (!response.ok) {
+        if (response.status === 401) {
+            try {
+                unauthorizedHandler?.({ url, data });
+            } catch (error) {
+                console.warn('[HTTP] Unauthorized handler failed:', error);
+            }
+        }
         const message = data?.message || data?.error || `HTTP ${response.status}`;
         throw new APIError(message, response.status, data);
     }

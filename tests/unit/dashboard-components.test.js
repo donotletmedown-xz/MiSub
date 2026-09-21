@@ -55,7 +55,7 @@ describe('dashboard UI components', () => {
             profiles: [],
         });
 
-        expect(wrapper.text()).toContain('链接生成前还差几步');
+        expect(wrapper.text()).toContain('生成链接还需几步');
         expect(wrapper.text()).toContain('固定主 Token');
         expect(wrapper.text()).toContain('创建组合订阅');
         expect(wrapper.find('input').attributes('disabled')).toBeDefined();
@@ -67,7 +67,7 @@ describe('dashboard UI components', () => {
             profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
         });
 
-        expect(wrapper.text()).not.toContain('链接生成前还差几步');
+        expect(wrapper.text()).not.toContain('生成链接还需几步');
         expect(wrapper.find('input').attributes('disabled')).toBeUndefined();
         expect(wrapper.find('input').element.value).toContain('/stable-token');
     });

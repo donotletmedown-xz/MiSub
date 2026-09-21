@@ -1,10 +1,14 @@
 <script setup>
-    import { ref, computed, onMounted, onActivated, watch } from 'vue';
+    import { ref, computed, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
     import { useI18n } from '../i18n/index.js';
     import MigrationModal from '../components/modals/MigrationModal.vue';
     import { useSettingsLogic } from '../composables/useSettingsLogic.js';
     import SettingsLayout from '../components/layout/SettingsLayout.vue';
+    import {
+        resolveSettingsFocusTab,
+        resolveSettingsFocusAnchor,
+    } from '../utils/dashboard-deeplink.js';
 
     import SettingsSidebar from '../components/settings/SettingsSidebar.vue';
     import BasicSettings from '../components/settings/sections/BasicSettings.vue';
@@ -40,6 +44,37 @@
     const activeTab = ref('basic');
     const route = useRoute();
 
+    // --- Dashboard deep-link focus (?focus=mytoken / profileToken) ---
+    // The dashboard's "去设置 Token" buttons land here with `?focus=`. Without
+    // this the query was ignored and the user had to hunt for the field.
+    const highlightedFocusId = ref('');
+    let highlightTimer = null;
+
+    function applyFocusFromQuery() {
+        const focus = route.query?.focus;
+        const tab = resolveSettingsFocusTab(focus);
+        if (!tab) return;
+
+        activeTab.value = tab;
+
+        const anchorId = resolveSettingsFocusAnchor(focus);
+        if (!anchorId) return;
+
+        // Highlight immediately so the state is authoritative; scrolling needs
+        // the tab's DOM to exist, so that part waits for the next tick.
+        highlightedFocusId.value = anchorId;
+        clearTimeout(highlightTimer);
+        highlightTimer = setTimeout(() => {
+            highlightedFocusId.value = '';
+        }, 2400);
+
+        nextTick(() => {
+            const target =
+                typeof document !== 'undefined' ? document.getElementById(anchorId) : null;
+            target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        });
+    }
+
     const currentTabLabel = computed(() => {
         switch (activeTab.value) {
             case 'basic':
@@ -71,21 +106,34 @@
 
     onMounted(() => {
         loadSettings();
+        applyFocusFromQuery();
     });
 
     onActivated(() => {
         loadSettings();
+        applyFocusFromQuery();
     });
+
+    // A deep link can arrive while the view is already mounted (e.g. navigating
+    // from the dashboard twice), so react to query changes too.
+    watch(
+        () => route.query.focus,
+        () => applyFocusFromQuery()
+    );
 
     watch(
         () => route.path,
         (path) => {
-            if (path === '/settings') {
+            if (path === '/settings' && !resolveSettingsFocusTab(route.query?.focus)) {
                 activeTab.value = 'basic';
                 loadSettings();
             }
         }
     );
+
+    onUnmounted(() => {
+        clearTimeout(highlightTimer);
+    });
 </script>
 
 <template>
@@ -149,6 +197,7 @@
                     v-show="activeTab === 'basic'"
                     :settings="settings"
                     :disguiseConfig="disguiseConfig"
+                    :highlighted-focus-id="highlightedFocusId"
                 />
                 <HomeSettings v-show="activeTab === 'home'" :settings="settings" />
                 <GlobalSettings v-show="activeTab === 'global'" :settings="settings" />

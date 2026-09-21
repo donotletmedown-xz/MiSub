@@ -43,6 +43,45 @@ describe('API route access boundaries', () => {
         expect(publicClients.status).toBe(200);
     });
 
+    it('does not expose the custom login path through public configuration', async () => {
+        const env = {
+            MISUB_KV: createKv({
+                worker_settings_v1: JSON.stringify({ customLoginPath: 'admin-login' }),
+            }),
+        };
+
+        const response = await handleApiRequest(
+            new Request('https://example.com/api/public_config'),
+            env
+        );
+        const body = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(body).not.toHaveProperty('customLoginPath');
+        expect(body.isLoginPath).toBe(false);
+    });
+
+    it('marks the current configured login path without returning the path', async () => {
+        const env = {
+            MISUB_KV: createKv({
+                worker_settings_v1: JSON.stringify({ customLoginPath: 'admin-login' }),
+            }),
+        };
+
+        SettingsCache.clear();
+        const response = await handleApiRequest(
+            new Request('https://example.com/api/public_config', {
+                headers: { 'X-MiSub-Path': '/admin-login' },
+            }),
+            env
+        );
+        const body = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(body.isLoginPath).toBe(true);
+        expect(body).not.toHaveProperty('customLoginPath');
+    });
+
     it('exposes the configured default locale on the public profiles endpoint', async () => {
         const env = {
             MISUB_KV: createKv({

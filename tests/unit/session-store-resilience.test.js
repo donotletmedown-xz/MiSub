@@ -5,11 +5,12 @@ const apiMocks = vi.hoisted(() => ({
     fetchInitialData: vi.fn(),
     fetchPublicConfig: vi.fn(),
     login: vi.fn(),
+    apiGet: vi.fn(),
 }));
 
 vi.mock('../../src/lib/api', () => apiMocks);
 vi.mock('../../src/lib/http.js', () => ({
-    api: { get: vi.fn() },
+    api: { get: apiMocks.apiGet },
 }));
 vi.mock('../../src/router', () => ({
     default: { push: vi.fn() },
@@ -68,6 +69,52 @@ describe('session store resilience', () => {
         expect(store.sessionState).toBe('loggedIn');
         expect(store.initialData).toEqual(data);
         expect(store.publicConfig.customLoginPath).toBe('login');
+    });
+
+    it('preserves the last known public config after a later fetch failure', async () => {
+        const { useSessionStore } = await import('../../src/stores/session.js');
+        const store = useSessionStore();
+        const data = { config: {}, misubs: [], profiles: [] };
+        apiMocks.fetchInitialData.mockResolvedValue({ success: true, data });
+        apiMocks.fetchPublicConfig.mockResolvedValueOnce({
+            success: true,
+            data: { customLoginPath: 'admin-login', enablePublicPage: true },
+        });
+        await store.checkSession();
+
+        apiMocks.fetchPublicConfig.mockResolvedValueOnce({ success: false, error: 'network down' });
+        await store.checkSession();
+
+        expect(store.publicConfig.customLoginPath).toBe('admin-login');
+        expect(store.publicConfig.enablePublicPage).toBe(true);
+    });
+
+    it('keeps a failed logout from claiming the session was cleared', async () => {
+        const { useSessionStore } = await import('../../src/stores/session.js');
+        const store = useSessionStore();
+        store.sessionState = 'loggedIn';
+        apiMocks.apiGet.mockRejectedValue(new Error('network down'));
+        apiMocks.fetchInitialData.mockResolvedValue({ success: true, data: {} });
+
+        const errorSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            await expect(store.logout()).resolves.toBe(false);
+            expect(store.sessionState).toBe('loggedIn');
+        } finally {
+            errorSpy.mockRestore();
+        }
+    });
+
+    it('waits for session confirmation before redirecting after login', async () => {
+        const { useSessionStore } = await import('../../src/stores/session.js');
+        const store = useSessionStore();
+        apiMocks.login.mockResolvedValue({ success: true, data: {} });
+        apiMocks.fetchInitialData.mockResolvedValue({ success: true, data: {} });
+        apiMocks.fetchPublicConfig.mockResolvedValue({ success: true, data: {} });
+
+        await store.login('password');
+
+        expect(store.sessionState).toBe('loggedIn');
     });
 
     it('keeps default-password warning from login response for immediate frontend display', async () => {

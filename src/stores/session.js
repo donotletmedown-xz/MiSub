@@ -14,6 +14,7 @@ export const useSessionStore = defineStore('session', () => {
     const securityWarning = ref(null);
     const defaultPublicConfig = Object.freeze({
         enablePublicPage: true,
+        isLoginPath: false,
         customLoginPath: 'login',
         customPage: {
             enabled: false,
@@ -35,6 +36,7 @@ export const useSessionStore = defineStore('session', () => {
         ...defaultPublicConfig,
         customPage: { ...defaultPublicConfig.customPage },
     }); // Default true until fetched
+    const hasLoadedPublicConfig = ref(false);
 
     async function checkSession() {
         // Parallel fetch of initial data (auth check) and public config
@@ -46,8 +48,9 @@ export const useSessionStore = defineStore('session', () => {
         // Update public config
         if (pConfigResult.success) {
             publicConfig.value = pConfigResult.data;
-        } else {
-            // Fallback to default if fetch fails
+            hasLoadedPublicConfig.value = true;
+        } else if (!hasLoadedPublicConfig.value) {
+            // Fail closed on the first load; preserve a known-good config on later retries.
             publicConfig.value = {
                 ...disabledPublicConfig,
                 customPage: { ...disabledPublicConfig.customPage },
@@ -88,25 +91,52 @@ export const useSessionStore = defineStore('session', () => {
         const result = await apiLogin(password);
         if (result.success) {
             securityWarning.value = result.data?.securityWarning || null;
-            handleLoginSuccess();
+            const authenticated = await handleLoginSuccess();
+            if (!authenticated) {
+                throw new Error(t('settings.sessionCheckFailed'));
+            }
             // 登录成功后跳转到仪表盘
-            router.push({ path: '/dashboard' });
+            await router.push({ path: '/dashboard' });
         } else {
             throw new Error(result.error || t('settings.loginFailed'));
         }
     }
 
-    function handleLoginSuccess() {
+    async function handleLoginSuccess() {
         sessionState.value = 'loading';
-        checkSession();
+        await checkSession();
+        return sessionState.value === 'loggedIn';
+    }
+
+    async function handleUnauthorized() {
+        if (sessionState.value !== 'loggedIn') return false;
+        sessionState.value = 'loggedOut';
+        initialData.value = null;
+        securityWarning.value = null;
+        useDataStore().clearCachedData();
+        return true;
     }
 
     async function logout() {
+        let logoutConfirmed = false;
         try {
             await api.get('/api/logout');
+            logoutConfirmed = true;
         } catch (error) {
             console.warn('Logout request failed:', error);
         }
+
+        if (!logoutConfirmed) {
+            const sessionCheck = await fetchInitialData();
+            if (sessionCheck.success || sessionCheck.errorType !== 'auth') {
+                sessionState.value = 'loggedIn';
+                handleError(new Error(t('settings.logoutFailed')), t('settings.logoutContext'), {
+                    errorType: 'logout_failed',
+                });
+                return false;
+            }
+        }
+
         sessionState.value = 'loggedOut';
         initialData.value = null;
         securityWarning.value = null;
@@ -126,6 +156,7 @@ export const useSessionStore = defineStore('session', () => {
         subscriptionConfig,
         securityWarning,
         checkSession,
+        handleUnauthorized,
         login,
         logout,
     };

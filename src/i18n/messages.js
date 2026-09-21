@@ -311,6 +311,12 @@ export const messages = {
             searchPlaceholder: '搜索机场订阅名称、备注或链接...',
             listSearchPlaceholder: '搜索名称、备注或链接',
             noSearchResults: '没有找到匹配的机场订阅。',
+            clearStatusFilter: '清除筛选',
+            filterStatusDisabled: '仅显示已停用的订阅',
+            filterStatusError: '仅显示最近更新失败的订阅',
+            filterStatusExpired: '仅显示已过期的订阅',
+            filterStatusLowTraffic: '仅显示流量不足的订阅',
+            filterStatusZeroNodes: '仅显示没有节点的订阅',
             expired: '已过期',
             expiresToday: '今天到期',
             expiresInDays: '{count} 天后',
@@ -473,7 +479,7 @@ export const messages = {
                 waitingForSubscriptions: '等待导入订阅源',
                 waitingForProfiles: '等待创建组合订阅',
                 needsRefresh: '需要刷新节点',
-                hasPendingItems: '有待处理事项',
+                hasPendingItems: '有待处理项',
                 ready: '配置可用',
             },
             actions: {
@@ -485,8 +491,71 @@ export const messages = {
                 title: '待处理事项',
                 subtitle: '优先显示会影响订阅可用性的配置问题。',
                 itemsCount: '{count} 项',
+                showMore: '展开其余 {count} 项',
+                showLess: '收起',
                 allGood: '关键配置正常',
                 allGoodDesc: '已具备生成和复制订阅链接的基本条件。',
+                dismiss: '忽略',
+                dismissItem: '从列表中忽略该项（仅影响本机显示）',
+                restoreDismissed: '已忽略 {count} 项，点击恢复',
+            },
+            healthItems: {
+                missingSubscriptions: {
+                    title: '还没有机场订阅',
+                    description: '先添加一个机场订阅，MiSub 才能获取节点并生成可用链接。',
+                    action: '添加机场订阅',
+                },
+                noEnabledSubscriptions: {
+                    title: '没有启用的机场订阅',
+                    description: '当前订阅都处于停用状态，生成的默认订阅可能为空。',
+                    action: '检查机场订阅',
+                },
+                missingProfiles: {
+                    title: '还没有组合订阅',
+                    description: '创建组合订阅后，可以按用途输出不同客户端链接。',
+                    action: '创建组合订阅',
+                },
+                noActiveProfiles: {
+                    title: '组合订阅均未启用',
+                    description: '公开页和分享链接可能没有可用组合。',
+                    action: '检查我的订阅',
+                },
+                missingToken: {
+                    title: '主 Token 未配置',
+                    description: '固定主 Token 后，默认订阅链接才会稳定可复制。',
+                    action: '去设置 Token',
+                },
+                autoToken: {
+                    title: '主 Token 仍为自动模式',
+                    description: '自动 Token 可能变化，建议改成固定 Token 以避免客户端链接失效。',
+                    action: '固定 Token',
+                },
+                zeroNodes: {
+                    title: '当前没有可用节点',
+                    description: '请刷新订阅或检查订阅源、代理和 User-Agent 设置。',
+                    action: '检查机场订阅',
+                },
+                subscriptionErrors: {
+                    title: '{count} 个订阅最近更新失败',
+                    description: '建议查看错误详情或进入订阅日志排查。',
+                    action: '查看失败订阅',
+                    secondaryAction: '打开日志',
+                },
+                expiredSubscriptions: {
+                    title: '{count} 个订阅已过期',
+                    description: '过期订阅可能无法继续提供节点。',
+                    action: '检查机场订阅',
+                },
+                lowTraffic: {
+                    title: '{count} 个订阅流量不足',
+                    description: '剩余流量低于 20%，建议及时续费或切换来源。',
+                    action: '检查流量',
+                },
+                disabledSubscriptions: {
+                    title: '{count} 个订阅已停用',
+                    description: '如需加入默认订阅，请前往机场订阅重新启用。',
+                    action: '管理订阅',
+                },
             },
             guide: {
                 title: '新手使用指南',
@@ -526,7 +595,7 @@ export const messages = {
             dashboardHint: '提示：常用操作在此，更多管理请前往对应模块。',
             linkCard: {
                 title: '生成订阅链接',
-                setupTitle: '链接生成前还差几步',
+                setupTitle: '生成链接还需几步',
                 mainTokenTitle: '固定主 Token',
                 mainTokenDesc: '默认订阅链接依赖主 Token，固定后客户端链接不会随自动值变化。',
                 profileTitle: '创建组合订阅',
@@ -617,6 +686,8 @@ export const messages = {
             sessionCheckFailed: '会话检查失败',
             sessionCheckContext: '会话检查',
             authFailedRelogin: '认证失败,请重新登录',
+            logoutFailed: '退出登录请求失败，当前登录状态未改变',
+            logoutContext: '退出登录',
             requestTimeout: '请求超时,请稍后重试',
             networkFailedGeneric: '网络连接失败,请检查网络连接',
             serverResponseInvalid: '服务器响应格式错误',
@@ -1662,6 +1733,12 @@ export const messages = {
             searchPlaceholder: 'Search source name, notes, or URL...',
             listSearchPlaceholder: 'Search name, notes, or URL',
             noSearchResults: 'No matching sources found.',
+            clearStatusFilter: 'Clear filter',
+            filterStatusDisabled: 'Showing disabled sources only',
+            filterStatusError: 'Showing sources that failed to update',
+            filterStatusExpired: 'Showing expired sources only',
+            filterStatusLowTraffic: 'Showing sources with low traffic',
+            filterStatusZeroNodes: 'Showing sources without nodes',
             expired: 'Expired',
             expiresToday: 'Expires today',
             expiresInDays: 'In {count} days',
@@ -1825,7 +1902,7 @@ export const messages = {
                 waitingForSubscriptions: 'Add sources',
                 waitingForProfiles: 'Add profiles',
                 needsRefresh: 'Refresh nodes',
-                hasPendingItems: 'Pending',
+                hasPendingItems: 'Items pending',
                 ready: 'Ready',
             },
             actions: {
@@ -1834,11 +1911,80 @@ export const messages = {
                 addProfile: 'Add profile',
             },
             health: {
-                title: 'Pending',
+                title: 'Pending items',
                 subtitle: 'Issues affecting availability.',
                 itemsCount: '{count} items',
+                showMore: 'Show {count} more',
+                showLess: 'Show less',
                 allGood: 'All normal',
                 allGoodDesc: 'Ready to generate links.',
+                dismiss: 'Dismiss',
+                dismissItem: 'Hide this item locally',
+                restoreDismissed: '{count} dismissed — restore',
+            },
+            healthItems: {
+                missingSubscriptions: {
+                    title: 'No sources yet',
+                    description:
+                        'Add a source first so MiSub can fetch nodes and generate usable links.',
+                    action: 'Add source',
+                },
+                noEnabledSubscriptions: {
+                    title: 'No enabled sources',
+                    description:
+                        'Every source is disabled, so the default subscription may come out empty.',
+                    action: 'Check sources',
+                },
+                missingProfiles: {
+                    title: 'No profiles yet',
+                    description:
+                        'Profiles let you output different client links for different purposes.',
+                    action: 'Create a profile',
+                },
+                noActiveProfiles: {
+                    title: 'All profiles are disabled',
+                    description: 'The public page and share links may have no usable profiles.',
+                    action: 'Check profiles',
+                },
+                missingToken: {
+                    title: 'Main token is not set',
+                    description:
+                        'Set a fixed main token so default subscription links stay copyable.',
+                    action: 'Set token',
+                },
+                autoToken: {
+                    title: 'Main token is still automatic',
+                    description:
+                        'An automatic token can change and break client links. Set a fixed one instead.',
+                    action: 'Set fixed token',
+                },
+                zeroNodes: {
+                    title: 'No usable nodes right now',
+                    description:
+                        'Refresh sources, or check the source, proxy and User-Agent settings.',
+                    action: 'Check sources',
+                },
+                subscriptionErrors: {
+                    title: '{count} source(s) failed to update',
+                    description: 'Open the error details or check the subscription log.',
+                    action: 'View failed sources',
+                    secondaryAction: 'Open logs',
+                },
+                expiredSubscriptions: {
+                    title: '{count} source(s) have expired',
+                    description: 'Expired sources may stop providing nodes.',
+                    action: 'Check sources',
+                },
+                lowTraffic: {
+                    title: '{count} source(s) are low on traffic',
+                    description: 'Less than 20% remains. Renew or switch source soon.',
+                    action: 'Check traffic',
+                },
+                disabledSubscriptions: {
+                    title: '{count} source(s) are disabled',
+                    description: 'Re-enable them on the sources page to include them again.',
+                    action: 'Manage sources',
+                },
             },
             guide: {
                 title: 'Guide',
@@ -1973,6 +2119,8 @@ export const messages = {
             sessionCheckFailed: 'Session check failed',
             sessionCheckContext: 'Session check',
             authFailedRelogin: 'Auth failed. Log in again.',
+            logoutFailed: 'Logout request failed. You are still signed in.',
+            logoutContext: 'Logout',
             requestTimeout: 'Request timed out. Try later.',
             networkFailedGeneric: 'Network failed. Check connection.',
             serverResponseInvalid: 'Invalid server response',

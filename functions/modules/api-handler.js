@@ -36,6 +36,12 @@ import { listRuleTemplates } from './rule-template-handler.js';
 
 const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
+function normalizeLoginPath(customLoginPath) {
+    if (typeof customLoginPath !== 'string') return '/login';
+    const normalized = customLoginPath.trim().replace(/^\/+/, '');
+    return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
+}
+
 function normalizeProfile(profile = {}) {
     const normalized = { ...profile };
     normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
@@ -806,17 +812,29 @@ export async function handlePublicProfilesRequest(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicConfig(env) {
+export async function handlePublicConfig(request, env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
 
         // Merge with default settings to ensure enablePublicPage exists
         const mergedSettings = { ...defaultSettings, ...settings };
+        const configuredLoginPath = normalizeLoginPath(mergedSettings.customLoginPath);
+        let isLoginPath = configuredLoginPath === '/login';
+        try {
+            const clientPath = request?.headers?.get('X-MiSub-Path');
+            const referer = request?.headers?.get('Referer');
+            const sourcePath = clientPath || (referer ? new URL(referer).pathname : '');
+            if (sourcePath) {
+                isLoginPath = new URL(sourcePath, request.url).pathname === configuredLoginPath;
+            }
+        } catch {
+            // Keep the safe default when the browser sends an invalid/missing path.
+        }
 
         return createJsonResponse({
             enablePublicPage: mergedSettings.enablePublicPage,
-            customLoginPath: mergedSettings.customLoginPath,
+            isLoginPath,
             customPage: {
                 enabled: mergedSettings.customPage?.enabled || false,
                 useDefaultLayout: mergedSettings.customPage?.useDefaultLayout !== false,

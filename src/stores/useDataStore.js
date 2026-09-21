@@ -69,16 +69,16 @@ export const useDataStore = defineStore('data', () => {
     }
 
     async function fetchData(forceRefresh = false) {
-        if (isLoading.value) return;
+        if (isLoading.value) return false;
 
         // Effective Cache Check
-        if (hasDataLoaded.value && !forceRefresh) return;
+        if (hasDataLoaded.value && !forceRefresh) return true;
 
         if (!forceRefresh) {
             const cachedData = dataCache.get();
             if (cachedData) {
                 hydrateFromData(cachedData);
-                return;
+                return true;
             }
         }
 
@@ -93,10 +93,14 @@ export const useDataStore = defineStore('data', () => {
             hydrateFromData(data); // Re-use hydration logic
             pruneInvalidReferences(); // 数据拉取后执行自愈
             clearDirty();
+            return true;
         } catch (error) {
             console.error('Failed to fetch data:', error);
             showToast(t('store.fetchDataFailed', { message: error.message }), 'error');
-            throw error;
+            // 不向调用方抛出：所有调用点都没有 try/catch，rejection 会冒泡成
+            // 全局 unhandledrejection，被 main.js 处理器再提示一次，
+            // 用户会看到两个「操作失败」弹窗。
+            return false;
         } finally {
             isLoading.value = false;
         }
@@ -105,7 +109,7 @@ export const useDataStore = defineStore('data', () => {
     async function saveData() {
         if (isLoading.value) {
             showToast(t('store.tooFrequent'), 'warning');
-            return;
+            return false;
         }
 
         isLoading.value = true;
@@ -167,11 +171,14 @@ export const useDataStore = defineStore('data', () => {
                 ruleTemplates: ruleTemplates.value,
                 config: settingsStore.config,
             });
+
+            return true;
         } catch (error) {
             console.error('[Store] Failed to save data:', error);
             showToast(t('store.saveDataFailed', { message: error.message }), 'error');
             saveState.value = 'idle';
-            throw error;
+            // 同 fetchData：提示一次即可，不再向上抛出避免二次弹窗
+            return false;
         } finally {
             isLoading.value = false;
         }

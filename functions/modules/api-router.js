@@ -229,7 +229,7 @@ export async function handleApiRequest(request, env, context = null) {
     }
 
     if (path === '/public_config' || path === '/config') {
-        return await handlePublicConfig(env);
+        return await handlePublicConfig(request, env);
     }
 
     if (path === '/public/profiles') {

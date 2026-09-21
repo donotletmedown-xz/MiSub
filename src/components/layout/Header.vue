@@ -48,10 +48,15 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="safe-top-inset">
                 <div class="flex justify-between items-center h-16 md:h-[76px]">
-                    <BrandLogo v-if="!hideBranding" text-size-class="text-lg" :icon-size="32" />
+                    <BrandLogo
+                        v-if="!hideBranding"
+                        :to="isLoggedIn ? '/dashboard' : '/'"
+                        text-size-class="text-lg"
+                        :icon-size="32"
+                    />
                     <router-link
                         v-else
-                        to="/"
+                        :to="isLoggedIn ? '/dashboard' : '/'"
                         class="text-sm font-semibold tracking-[0.24em] uppercase text-gray-500 dark:text-gray-400"
                         >{{ t('app.home') }}</router-link
                     >

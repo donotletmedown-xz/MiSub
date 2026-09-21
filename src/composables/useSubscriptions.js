@@ -409,11 +409,14 @@ export function useSubscriptions(markDirty) {
             intervalMs = intervalMinutes * 60 * 1000;
         } else {
             const settings = dataStore.settings;
-            const settingsInterval = settings?.autoUpdateInterval;
-            intervalMs =
-                settingsInterval != null && settingsInterval > 0
-                    ? settingsInterval * 60 * 1000
-                    : DEFAULT_INTERVAL_MS;
+            const settingsInterval = Number(settings?.autoUpdateInterval);
+            if (settingsInterval === 0) {
+                intervalMs = 0;
+            } else if (Number.isFinite(settingsInterval) && settingsInterval > 0) {
+                intervalMs = settingsInterval * 60 * 1000;
+            } else {
+                intervalMs = DEFAULT_INTERVAL_MS;
+            }
         }
 
         // 如果间隔为0，表示禁用自动更新

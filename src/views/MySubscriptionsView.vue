@@ -1,5 +1,6 @@
 <script setup>
-    import { ref, defineAsyncComponent } from 'vue';
+    import { ref, defineAsyncComponent, onMounted, watch, nextTick } from 'vue';
+    import { useRoute } from 'vue-router';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useProfiles } from '../composables/useProfiles.js';
     import ProfilePanel from '../components/profiles/ProfilePanel.vue';
@@ -8,13 +9,30 @@
     import { useManualNodes } from '../composables/useManualNodes.js';
     import { useToastStore } from '../stores/toast.js';
     import { useI18n } from '../i18n/index.js';
+    import { resolveProfileFocus } from '../utils/dashboard-deeplink.js';
 
     const { t } = useI18n();
+    const route = useRoute();
 
     const dataStore = useDataStore();
     const { markDirty } = dataStore;
     const { showToast } = useToastStore();
     const isProfileSorting = ref(false);
+
+    // --- Dashboard deep-link (?focus=profiles) ---
+    // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
+    // to open the "add profile" flow directly instead of dropping the query.
+    const profilesSectionRef = ref(null);
+
+    function applyFocusFromQuery() {
+        if (!resolveProfileFocus(route.query?.focus)) return;
+        nextTick(() => {
+            profilesSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+    onMounted(applyFocusFromQuery);
+    watch(() => route.query.focus, applyFocusFromQuery);
 
     const {
         profiles,
@@ -131,29 +149,31 @@
 
 <template>
     <div class="max-w-(--breakpoint-xl) mx-auto">
-        <ProfilePanel
-            :profiles="profiles"
-            :paginated-profiles="paginatedProfiles"
-            :current-page="profilesCurrentPage"
-            :search-query="profileSearchQuery"
-            :filtered-count="filteredProfiles.length"
-            searchable
-            :total-pages="profilesTotalPages"
-            :is-sorting="isProfileSorting"
-            @add="handleAddProfile"
-            @edit="handleEditProfile"
-            @delete="handleDeleteProfile"
-            @deleteAll="showDeleteProfilesModal = true"
-            @toggle="handleProfileToggle"
-            @openCopy="handleOpenCopy"
-            @preview="handlePreviewProfile"
-            @reorder="handleProfileReorder"
-            @toggle-sort="toggleProfileSorting"
-            @change-page="changeProfilesPage"
-            @viewLogs="handleViewLogs"
-            @qrcode="handleQRCode"
-            @update-search="profileSearchQuery = $event"
-        />
+        <div ref="profilesSectionRef" data-testid="profiles-section">
+            <ProfilePanel
+                :profiles="profiles"
+                :paginated-profiles="paginatedProfiles"
+                :current-page="profilesCurrentPage"
+                :search-query="profileSearchQuery"
+                :filtered-count="filteredProfiles.length"
+                searchable
+                :total-pages="profilesTotalPages"
+                :is-sorting="isProfileSorting"
+                @add="handleAddProfile"
+                @edit="handleEditProfile"
+                @delete="handleDeleteProfile"
+                @deleteAll="showDeleteProfilesModal = true"
+                @toggle="handleProfileToggle"
+                @openCopy="handleOpenCopy"
+                @preview="handlePreviewProfile"
+                @reorder="handleProfileReorder"
+                @toggle-sort="toggleProfileSorting"
+                @change-page="changeProfilesPage"
+                @viewLogs="handleViewLogs"
+                @qrcode="handleQRCode"
+                @update-search="profileSearchQuery = $event"
+            />
+        </div>
 
         <LogModal
             :show="showLogModal"

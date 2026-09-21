@@ -1,5 +1,6 @@
 <script setup>
-    import { ref, defineAsyncComponent, computed } from 'vue';
+    import { ref, defineAsyncComponent, computed, onMounted, watch } from 'vue';
+    import { useRoute, useRouter } from 'vue-router';
     import { extractNodeName } from '../lib/utils.js';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useSubscriptions } from '../composables/useSubscriptions.js';
@@ -14,11 +15,17 @@
     import { useI18n } from '../i18n/index.js';
     import { inferAirportRootDomain } from '../utils/airport-domain.js';
     import { rememberDomainName } from '../utils/domain-name-memory.js';
+    import {
+        resolveSubscriptionStatusFilter,
+        matchesSubscriptionStatus,
+    } from '../utils/dashboard-deeplink.js';
 
     const dataStore = useDataStore();
     const { showToast } = useToastStore();
     const { markDirty } = dataStore;
     const { t } = useI18n();
+    const route = useRoute();
+    const router = useRouter();
 
     // State
     // State
@@ -157,19 +164,69 @@
             showQRCodeModal.value = true;
         }
     };
+
+    // --- Dashboard deep-link status filter (?status=error / expired / ...) ---
+    // The dashboard health cards link here with a status. Previously the query
+    // was dropped, so the user landed on an unfiltered list.
+    const activeStatusFilter = ref('');
+    const STATUS_FILTER_LABEL_KEYS = {
+        disabled: 'subscriptions.filterStatusDisabled',
+        error: 'subscriptions.filterStatusError',
+        expired: 'subscriptions.filterStatusExpired',
+        'low-traffic': 'subscriptions.filterStatusLowTraffic',
+        'zero-nodes': 'subscriptions.filterStatusZeroNodes',
+    };
+
+    const statusFilterLabel = computed(() => {
+        const key = STATUS_FILTER_LABEL_KEYS[activeStatusFilter.value];
+        return key ? t(key) : '';
+    });
+
+    // Subscriptions matching the active status filter, before search/pagination.
+    const statusFilteredSubscriptions = computed(() => {
+        if (!activeStatusFilter.value) return subscriptions.value;
+        return subscriptions.value.filter((sub) =>
+            matchesSubscriptionStatus(sub, activeStatusFilter.value)
+        );
+    });
+
+    function applyStatusFromQuery() {
+        activeStatusFilter.value = resolveSubscriptionStatusFilter(route.query?.status) || '';
+    }
+
+    const clearStatusFilter = () => {
+        activeStatusFilter.value = '';
+        if (route.query?.status) {
+            const nextQuery = { ...route.query };
+            delete nextQuery.status;
+            router.replace({ query: nextQuery });
+        }
+    };
+
+    onMounted(applyStatusFromQuery);
+    watch(() => route.query.status, applyStatusFromQuery);
+
+    // `subscriptions` is the prop the panel renders; when a status filter is
+    // active we narrow it so the list, the count and pagination all agree.
+    const visibleSubscriptions = computed(() =>
+        activeStatusFilter.value ? statusFilteredSubscriptions.value : subscriptions.value
+    );
 </script>
 
 <template>
     <div class="max-w-(--breakpoint-xl) mx-auto">
         <SubscriptionPanel
-            :subscriptions="subscriptions"
+            :subscriptions="visibleSubscriptions"
             :paginated-subscriptions="paginatedSubscriptions"
             :search-query="subscriptionSearchQuery"
             :filtered-count="filteredSubscriptions.length"
+            :status-filter="activeStatusFilter"
+            :status-filter-label="statusFilterLabel"
             :current-page="subsCurrentPage"
             :total-pages="subsTotalPages"
             :is-sorting="isSortingSubs"
             searchable
+            @clear-status-filter="clearStatusFilter"
             @add="handleAddSubscription"
             @delete="handleDeleteSubscriptionWithCleanup"
             @change-page="changeSubsPage"

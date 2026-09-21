@@ -1,7 +1,7 @@
 <script setup>
-    import { defineAsyncComponent, onMounted, watch, computed, ref } from 'vue';
+    import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
     import RouteErrorBoundary from './components/ui/RouteErrorBoundary.vue';
-    import { useRoute } from 'vue-router';
+    import { useRoute, useRouter } from 'vue-router';
     import { useThemeStore } from './stores/theme';
     import { useSessionStore } from './stores/session';
     import { useToastStore } from './stores/toast';
@@ -12,6 +12,7 @@
     import NavBar from './components/layout/NavBar.vue';
     import { detectLegacyD1 } from './lib/api.js';
     import { useI18n } from './i18n/index.js';
+    import { configureAuthGuard } from './router/index.js';
 
     // Lazy components
     const Login = defineAsyncComponent(() => import('./components/modals/Login.vue'));
@@ -32,6 +33,7 @@
     );
 
     const route = useRoute();
+    const router = useRouter();
     const { t } = useI18n();
     const themeStore = useThemeStore();
     const { theme } = storeToRefs(themeStore);
@@ -60,6 +62,26 @@
     const isLoggedIn = computed(() => sessionState.value === 'loggedIn');
     const isPublicRoute = computed(() => route.meta.isPublic);
     const isSessionLoading = computed(() => sessionState.value === 'loading');
+    const loginPath = computed(() => {
+        const rawPath = sessionStore.publicConfig?.customLoginPath;
+        if (typeof rawPath === 'string' && rawPath.trim()) {
+            const normalized = rawPath.trim().replace(/^\/+/, '');
+            if (normalized && normalized !== 'login') return `/${normalized}`;
+        }
+
+        try {
+            const rememberedPath = sessionStorage.getItem('misub:login-path');
+            if (rememberedPath && rememberedPath.startsWith('/')) return rememberedPath;
+        } catch {
+            // Ignore storage failures and use the default entry.
+        }
+        return '/login';
+    });
+
+    configureAuthGuard(() => ({
+        state: sessionState.value,
+        loginPath: loginPath.value,
+    }));
 
     const showModernNavBar = computed(() => isLoggedIn.value && layoutMode.value === 'modern');
     const shouldHidePublicBranding = computed(() => {
@@ -133,8 +155,13 @@
     );
 
     onMounted(async () => {
+        window.addEventListener('misub:unauthorized', handleUnauthorized);
         initTheme();
         await checkSession();
+    });
+
+    onUnmounted(() => {
+        window.removeEventListener('misub:unauthorized', handleUnauthorized);
     });
 
     watch(
@@ -211,6 +238,25 @@
         await dataStore.fetchData(true);
         toastStore.showToast(t('notices.discardedChanges'));
     };
+
+    const redirectUnauthenticatedRoute = () => {
+        if (sessionState.value !== 'loggedOut' || !route.meta?.requiresAuth) return;
+        if (route.path === loginPath.value) return;
+        router
+            .replace({ path: loginPath.value, query: { redirect: route.fullPath } })
+            .catch(() => {});
+    };
+
+    const handleUnauthorized = async () => {
+        const changed = await sessionStore.handleUnauthorized();
+        if (!changed) return;
+        toastStore.showToast(t('settings.authFailedRelogin'), 'error');
+        redirectUnauthenticatedRoute();
+    };
+
+    watch([sessionState, () => route.fullPath, loginPath], redirectUnauthenticatedRoute, {
+        immediate: true,
+    });
 
     const isCustomPageFullWidth = computed(() => {
         if (!isPublicRoute.value) return false;
