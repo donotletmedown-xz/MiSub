@@ -3,7 +3,7 @@
         <!-- Cosmic Background Elements -->
         <div class="absolute inset-0 bg-gray-900 overflow-hidden">
             <div
-                class="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"
+                class="absolute top-0 left-0 w-full h-full bg-[url('/noise.svg')] opacity-20 brightness-100 contrast-150"
             ></div>
             <div
                 class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/30 blur-[120px] animate-pulse-slow"

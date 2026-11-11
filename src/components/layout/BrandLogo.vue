@@ -20,7 +20,7 @@
 <template>
     <router-link :to="to" class="nav-brand-wrap">
         <div class="nav-brand-badge nav-brand-badge-sm" aria-hidden="true">
-            <img :width="iconSize" :height="iconSize" src="/logo.png" alt="MiSub" />
+            <img :width="iconSize" :height="iconSize" src="/logo-mark.png" alt="MiSub" />
         </div>
         <span class="nav-brand-text" :class="textSizeClass">MiSub</span>
     </router-link>

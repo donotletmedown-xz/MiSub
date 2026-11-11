@@ -42,7 +42,7 @@
                         <img
                             width="96"
                             height="96"
-                            src="/logo.png"
+                            src="/logo-mark.png"
                             alt="MiSub"
                             class="drop-shadow-2xl"
                         />
